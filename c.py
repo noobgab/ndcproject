@@ -2,6 +2,7 @@ import socket
 import threading
 from time import gmtime, strftime
 import time
+import hashlib
 
 HOST = "127.0.0.1"
 PORT = 50007
@@ -33,6 +34,7 @@ def setupUser(socket):
 def readInput(user, socket):
     while 1:
         text = raw_input()
+	hashText = hashlib.sha224(text).hexdigest()
         if prefix+"help" in text:
             line = "<cmd-help-"+user+">"
         elif prefix+"usercount" in text:
@@ -40,14 +42,14 @@ def readInput(user, socket):
         elif prefix+"servertime" in text:
             line = "<cmd-servertime-"+user+">"
         else:
-            line = "<msg-" + user + "-" + text + ">"
+            line = "<msg-" + user + "-" + text + "-" + hashText + ">"
         socket.sendall(line)
 
 def readData(user, socket):
     while 1:
         data = socket.recv(1024)
         data_split = data.split('-')
-        print "[" + strftime("%H:%M:%S", gmtime()) + "] " + data_split[1] + ": " + data_split[2][0:-1]
+        print "[" + strftime("%H:%M:%S", gmtime()) + "] " + data_split[1] + ": " + data_split[2]
 
 setupUser(s)
 

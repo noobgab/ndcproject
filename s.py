@@ -2,6 +2,7 @@ import socket
 import threading, Queue
 from time import gmtime, strftime
 import time
+import hashlib
 
 # Socket connection information
 HOST = "127.0.0.1"
@@ -20,6 +21,7 @@ userList = list()
 adminList = list()
 adminList.append("admin")
 commandList = ["help", "usercount", "servertime"]
+errorList = ["TamperingError: Message has been tampered"]
 
 def parseInput(data, con):
     print str(data)
@@ -38,9 +40,16 @@ def parseInput(data, con):
         elif cmd_extr == "servertime":
             con.send("<cmd-server-"+strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())+">")
     elif data_split[0][1:] == "msg":
-        for singleClient in currentConnections:
-            singleClient.send(str(data))
-
+		hashCheck = hashlib.sha224(data_split[2]).hexdigest()
+		if hashCheck == data_split[3][0:-1]:
+			for singleClient in currentConnections:
+				singleClient.send(str(data))
+		else:
+			for singleClient in currentConnections:
+				singleClient.send("<msg-server-" + errorList[0] + ">")
+			print errorList[0]
+			print "Original hash: " + data_split[3]
+			print "Tampered hash: " + hashCheck
 
 def manageConnection(con, addr):
     global currentConnections
