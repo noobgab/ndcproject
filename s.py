@@ -97,23 +97,15 @@ def parseInput(data, con):
             con.send("error")
 
     elif data_split[0][1:] == "msg":
-        for singleClient in currentConnections:
-            singleClient.send(data)
-        """
-        hashCheckMsg = hashlib.sha224(data_split[3][0:-1]).hexdigest()
-        if hashCheckMsg == data_split[2]:
-            lineMsg = str(data)
-            hashTextCmd = hashlib.sha224(lineMsg).hexdigest()
+        content = data[data.index(data_split[3]) + len(data_split[3]) + 1:][:-1]
+        hashCheckMsg = hashlib.sha224(content).hexdigest()
+        if hashCheckMsg == data_split[3]:
             for singleClient in currentConnections:
-				singleClient.send(lineMsg + "-" + hashTextCmd)
+                singleClient.send(data)
         else:
-            lineMsgError = "<msg-server-error-" + errorList["TemperError"] + ">"
-            hashTextCmd = hashlib.sha224(lineMsgError).hexdigest()
-            con.send(lineMsgError + "-" + hashTextCmd)
-            print "TamperError"
-            print "Original hash: " + data_split[2]
-            print "Tampered hash: " + hashCheck
-        """
+            lineMsgError = "<msg-server-"+getServerTime()+"-"+getHash(errorList["TamperError"])+"-"+errorList["TamperError"]+">"
+            print "["+data_split[2]+"] Tamper Error: "+data_split[1]+" -> \nOriginal hash: "+data_split[3]+" \nTampered hash: " + hashCheckMsg
+            con.send(lineMsgError)
 
 def manageConnection(con, addr):
     global currentConnections
