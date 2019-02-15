@@ -19,7 +19,8 @@ def setupUser(socket):
 
     while nameDone == False:
         username = raw_input("Enter a username: ")
-        socket.sendall("<cmd-startup-namechange-"+str(username)+">")
+        userHash = hashlib.sha224(str(username)).hexdigest()
+        socket.sendall("<cmd-startup-namechange-"+userHash+"-"+str(username)+">")
 
         data = socket.recv(1024)
 
@@ -31,10 +32,11 @@ def setupUser(socket):
         else:
             print "Error setting username. Try again..."
 
+
 def readInput(user, socket):
     while 1:
         text = raw_input()
-        hashText = hashlib.sha224(text).hexdigest()
+        hashText = hashlib.sha224(str(text)).hexdigest()
         if prefix+"help" in text:
             line = "<cmd-help-"+user+">"
         elif prefix+"usercount" in text:
@@ -42,23 +44,24 @@ def readInput(user, socket):
         elif prefix+"servertime" in text:
             line = "<cmd-servertime-"+user+">"
         elif prefix+"ping" in text:
-		    line = "<cmd-ping-"+user+">"
+            line = "<cmd-ping-"+user+">"
         elif prefix+"quit" in text:
             line = "<cmd-quit-"+user+">"
         else:
-            line = "<msg-" + user + "-" + hashText + "-" + text + ">"
+            line = "<msg-" + user + "-"+strftime("%H:%M:%S", gmtime())+"-" + hashText + "-" + text + ">"
         socket.sendall(line)
 
 def readData(user, socket):
     while 1:
         data = socket.recv(1024)
         data_split = data.split('-')
-        hashCheck = hashlib.sha224(data_split[0]+"-"+data_split[1]+"-"+data_split[2]+"-"+data_split[3]).hexdigest()
-        if data_split[1] != "confirm":
-            if hashCheck == data_split[4]:
-                print "[" + strftime("%H:%M:%S", gmtime()) + "] " + data_split[1] + ": " + data_split[3][0:-1]
-        ##else:
-		    ##print "[" + strftime("%H:%M:%S", gmtime()) + "] " + data_split[1] + ": " + data_split[3][0:-1]
+        content = data[data.index(data_split[3]) + len(data_split[3]) + 1:][:-1]
+        hashCheck = hashlib.sha224(str(content)).hexdigest()
+
+        if hashCheck == data_split[3]:
+            print "["+data_split[2]+"] " + data_split[1] + ": " + content
+        else:
+            print "Error processing your request. Please try again."      
 
 setupUser(s)
 

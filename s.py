@@ -53,6 +53,9 @@ def parseInput(data, con):
             con.send("<cmd-confirm-user-quit>")
             con.shutdown(socket.SHUT_RD)
     elif data_split[0][1:] == "msg":
+        for singleClient in currentConnections:
+            singleClient.send(data)
+        """
         hashCheckMsg = hashlib.sha224(data_split[3][0:-1]).hexdigest()
         if hashCheckMsg == data_split[2]:
             lineMsg = str(data)
@@ -66,6 +69,7 @@ def parseInput(data, con):
             print "TamperError"
             print "Original hash: " + data_split[2]
             print "Tampered hash: " + hashCheck
+        """
 
 def manageConnection(con, addr):
     global currentConnections
@@ -79,22 +83,29 @@ def manageConnection(con, addr):
     while nameDone == False:
         data = con.recv(1024)
         checkstr = data.split("-")
-        print "Checking username: \"" + str(checkstr[3][0:-1]) + "\""
+        print "Checking username: \"" + str(checkstr[4][0:-1]) + "\""
         if checkstr[0] == "<cmd" and checkstr[2] == "namechange":
-            usr = checkstr[3][0:-1]
-            try:
-                userList.index(usr)
-                print "Username declined"
-                con.send("<cmd-confirm-false>")
-            except ValueError as ve:
-                userList.append(usr)
-                nameDone = True
-                print "Username accepted"
-                con.send("<cmd-confirm-true-"+serverTitle+">")
-                for singleClient in currentConnections:
-                    lineMsgJoin = "<msg-server-startup-"+usr+" has joined the chat>"
-                    hashTextCmd = hashlib.sha224(lineMsgJoin).hexdigest()
-                    singleClient.send(lineMsgJoin + "-" + hashTextCmd)
+            usr = checkstr[4][0:-1]
+            if checkstr[3] == hashlib.sha224(usr).hexdigest():
+                try:
+                    userList.index(usr)
+                    print "Username declined"
+                    con.send("<cmd-confirm-false>")
+                except ValueError as ve:
+                    userList.append(usr)
+                    nameDone = True
+                    print "Username accepted"
+                    con.send("<cmd-confirm-true-"+serverTitle+">")
+                    for singleClient in currentConnections:
+                        hashTextCmd = hashlib.sha224(usr+" has joined the chat").hexdigest()
+                        typeMsg = strftime("%H:%M:%S", gmtime())
+                        if singleClient == con:
+                            typeMsg = "startup"
+                        
+                        lineMsgJoin = "<msg-server-"+typeMsg+"-"+hashTextCmd+"-"+usr+" has joined the chat>"
+                        singleClient.send(lineMsgJoin)
+            else:
+                con.send("<cmd-confirm-false>");
 
     while 1:
         data = con.recv(1024)
