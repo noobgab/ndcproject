@@ -21,7 +21,7 @@ currentConnections = list()
 userList = list()
 adminList = list()
 adminList.append("admin")
-commandList = ["help", "usercount", "servertime", "ping"]
+commandList = ["help", "usercount", "servertime", "ping", "quit"]
 
 errorList = {
     "TamperError": "Server had trouble receiving your message. Please try again",
@@ -66,7 +66,29 @@ def parseInput(data, con):
                 line = "<cmd-server-"+getServerTime()+"-"+getHash(lineStr)+"-"+lineStr+">"
                 con.send(line)
             else:
-                dataTamp = True     
+                dataTamp = True
+        elif cmd_extr == "servertime":
+            if data_split[3] == cmd_hex_disct["servertime"]:
+                lineStr = "The current server time is: " + getServerTime()
+                line = "<cmd-server-"+getServerTime()+"-"+getHash(lineStr)+"-"+lineStr+">"
+                con.send(line)
+            else:
+                dataTamp = True
+        elif cmd_extr == "ping":
+            if data_split[3] == cmd_hex_disct["ping"]:
+                lineStr = "Pong!"
+                line = "<cmd-server-"+getServerTime()+"-"+getHash(lineStr)+"-"+lineStr+">"
+                con.send(line)
+            else:
+                dataTamp = True
+        elif cmd_extr == "quit":
+            if data_split[3] == cmd_hex_disct["quit"]:
+                print "Not sure what to do with the !quit command just yet..."
+                lineStr = "please don't quit :("
+                line = "<cmd-server-"+getServerTime()+"-"+getHash(lineStr)+"-"+lineStr+">"
+                con.send(line)
+            else:
+                dataTamp = True
         else:
             con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["InvalidCommandError"])+"-"+errorList["InvalidCommandError"]+">")
 
