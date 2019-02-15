@@ -13,6 +13,14 @@ s.connect((HOST, PORT))
 prefix = "!"
 username = ""
 
+cmd_hex_disct = {
+    "help": hashlib.sha224("help").hexdigest(),
+    "usercount": hashlib.sha224("usercount").hexdigest(),
+    "servertime": hashlib.sha224("servertime").hexdigest(),
+    "ping": hashlib.sha224("ping").hexdigest(),
+    "quit": hashlib.sha224("quit").hexdigest()
+}
+
 def setupUser(socket):
     global username
     nameDone = False
@@ -32,36 +40,39 @@ def setupUser(socket):
         else:
             print "Error setting username. Try again..."
 
-
 def readInput(user, socket):
+    global cmd_hex_disct
     while 1:
-        text = raw_input()
-        hashText = hashlib.sha224(str(text)).hexdigest()
+        text = raw_input()  
         if prefix+"help" in text:
-            line = "<cmd-help-"+user+">"
+            line = "<cmd-help-"+strftime("%H:%M:%S", gmtime())+"-"+cmd_hex_disct["help"]+"-"+user+">"
         elif prefix+"usercount" in text:
-            line = "<cmd-usercount-"+user+">"
+            line = "<cmd-usercount-"+strftime("%H:%M:%S", gmtime())+"-"+cmd_hex_disct["usercount"]+"-"+user+">"
         elif prefix+"servertime" in text:
-            line = "<cmd-servertime-"+user+">"
+            line = "<cmd-servertime-"+strftime("%H:%M:%S", gmtime())+"-"+cmd_hex_disct["servertime"]+"-"+user+">"
         elif prefix+"ping" in text:
-            line = "<cmd-ping-"+user+">"
+            line = "<cmd-ping-"+strftime("%H:%M:%S", gmtime())+"-"+cmd_hex_disct["ping"]+"-"+user+">"
         elif prefix+"quit" in text:
-            line = "<cmd-quit-"+user+">"
+            line = "<cmd-quit-"+strftime("%H:%M:%S", gmtime())+"-"+cmd_hex_disct["quit"]+"-"+user+">"
         else:
+            hashText = hashlib.sha224(str(text)).hexdigest()
             line = "<msg-" + user + "-"+strftime("%H:%M:%S", gmtime())+"-" + hashText + "-" + text + ">"
         socket.sendall(line)
-
+#<type-author-timestamp-hash-content>
 def readData(user, socket):
     while 1:
         data = socket.recv(1024)
         data_split = data.split('-')
-        content = data[data.index(data_split[3]) + len(data_split[3]) + 1:][:-1]
-        hashCheck = hashlib.sha224(str(content)).hexdigest()
+        try :
+            content = data[data.index(data_split[3]) + len(data_split[3]) + 1:][:-1]
+            hashCheck = hashlib.sha224(str(content)).hexdigest()
 
-        if hashCheck == data_split[3]:
-            print "["+data_split[2]+"] " + data_split[1] + ": " + content
-        else:
-            print "Error processing your request. Please try again."      
+            if hashCheck == data_split[3]:
+                print "["+data_split[2]+"] " + data_split[1] + ": " + content
+            else:
+                print "Error processing your request. Please try again."
+        except Exception as e:
+            print "Error processing your request. Please try again."
 
 setupUser(s)
 

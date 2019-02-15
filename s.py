@@ -22,36 +22,58 @@ userList = list()
 adminList = list()
 adminList.append("admin")
 commandList = ["help", "usercount", "servertime", "ping"]
-errorList = {"TamperError":"Server had trouble receiving your message. Please try again"}
+
+errorList = {
+    "TamperError": "Server had trouble receiving your message. Please try again",
+    "InvalidCommandError": "This command does not exist, please type !help to get the list of available commands"
+}
+
+cmd_hex_disct = {
+    "help": hashlib.sha224("help").hexdigest(),
+    "usercount": hashlib.sha224("usercount").hexdigest(),
+    "servertime": hashlib.sha224("servertime").hexdigest(),
+    "ping": hashlib.sha224("ping").hexdigest(),
+    "quit": hashlib.sha224("quit").hexdigest()
+}
+#<type-author-timestamp-hash-content>
+
+def getServerTime():
+    return strftime("%H:%M:%S", gmtime())
+
+def getHash(str):
+    return hashlib.sha224(str).hexdigest()
 
 def parseInput(data, con):
     print str(data)
     data_split = data.split('-')
     if data_split[0][1:] == "cmd":
         cmd_extr = data_split[1]
+        dataTamp = False
         if cmd_extr == "help":
-            lineHelp = "<cmd-server-help-Here is a list of commands: "
-            for cmd in commandList:
-                lineHelp += prefix + cmd + ", "
-            lineHelp = lineHelp[0:-2]
-            lineHelp += ">"
-            hashTextCmd = hashlib.sha224(lineHelp).hexdigest()
-            con.send(lineHelp + "-" + hashTextCmd)
+            if data_split[3] == cmd_hex_disct["help"]:
+                lineStr = "Here is a list of available commands: "
+                for cmd in commandList:
+                    lineStr += prefix + cmd + ", "
+                lineStr = lineStr[0:-2]
+
+                line = "<cmd-server-"+getServerTime()+"-"+getHash(lineStr)+"-"+lineStr+">"
+                con.send(line)
+            else:
+                dataTamp = True
         elif cmd_extr == "usercount":
-            lineUsercount = "<cmd-server-usercount-There are "+str(len(userList))+" user(s) online>"
-            hashTextCmd = hashlib.sha224(lineUsercount).hexdigest()
-            con.send(lineUsercount + "-" + hashTextCmd)
-        elif cmd_extr == "servertime":
-            lineServertime = "<cmd-server-servertime-"+strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())+">"
-            hashTextCmd = hashlib.sha224(lineServertime).hexdigest()
-            con.send(lineServertime + "-" + hashTextCmd)
-        elif cmd_extr == "ping":
-            linePing = "<cmd-server-ping-pong>"
-            hashTextCmd = hashlib.sha224(linePing).hexdigest()
-            con.send(linePing + "-" + hashTextCmd)
-        elif cmd_extr == "quit":
-            con.send("<cmd-confirm-user-quit>")
-            con.shutdown(socket.SHUT_RD)
+            if data_split[3] == cmd_hex_disct["usercount"]:
+                lineStr = "There are "+str(len(userList))+" user(s) online"
+                line = "<cmd-server-"+getServerTime()+"-"+getHash(lineStr)+"-"+lineStr+">"
+                con.send(line)
+            else:
+                dataTamp = True     
+        else:
+            con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["InvalidCommandError"])+"-"+errorList["InvalidCommandError"]+">")
+
+        if dataTamp == True:
+            print "[" + data_split[2] + "] "+data_split[4][:-1]+": Data tampering detected. The command " + prefix + cmd_extr + " is not going to be executed"
+            con.send("error")
+
     elif data_split[0][1:] == "msg":
         for singleClient in currentConnections:
             singleClient.send(data)
