@@ -54,6 +54,11 @@ def readData(user, socket):
         data = socket.recv(1024)
         data_split = data.split('-')
         hashCheck = hashlib.sha224(data_split[0]+"-"+data_split[1]+"-"+data_split[2]+"-"+data_split[3]).hexdigest()
+        print data
+        print data_split[0]
+        print data_split[1]
+        print data_split[2]
+        print data_split[3]
         if data_split[1] != "confirm":
             if hashCheck == data_split[4]:
                 print "[" + strftime("%H:%M:%S", gmtime()) + "] " + data_split[1] + ": " + data_split[3][0:-1]
