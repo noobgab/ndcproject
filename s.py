@@ -13,15 +13,16 @@ s.bind((HOST,PORT))
 # Global Variables
 buffer = ""
 prefix = "!"
-serverTitle = "No Title"
+serverTitle = "No title"
+hashTextCmd = ""
 
 # Global Lists
 currentConnections = list()
 userList = list()
 adminList = list()
 adminList.append("admin")
-commandList = ["help", "usercount", "servertime"]
-errorList = ["TamperingError: Message has been tampered"]
+commandList = ["help", "usercount", "servertime", "ping"]
+errorList = {"TemperError":"Server had trouble receiving your message. Please try again"}
 
 def parseInput(data, con):
     print str(data)
@@ -29,27 +30,39 @@ def parseInput(data, con):
     if data_split[0][1:] == "cmd":
         cmd_extr = data_split[1]
         if cmd_extr == "help":
-            line = "<cmd-help-Here is a list of commands: "
+            lineHelp = "<cmd-server-help-Here is a list of commands: "
             for cmd in commandList:
-                line += "!" + cmd + ", "
-            line += ">"
-            line = line[0:-2]
-            con.send(line)
+                lineHelp += prefix + cmd + ", "
+            lineHelp = line[0:-2]
+            lineHelp += ">"
+            hashTextCmd = hashlib.sha224(lineHelp).hexdigest()
+            con.send(lineHelp + "-" + hashTextCmd)
         elif cmd_extr == "usercount":
-            con.send("<cmd-server-There are "+str(len(userList))+" user(s) online>")
+            lineUsercount = "<cmd-server-usercount-There are "+str(len(userList))+" user(s) online>"
+            hashTextCmd = hashlib.sha224(lineUsercount).hexdigest()
+            con.send(lineUsercount + "-" + hashTextCmd)
         elif cmd_extr == "servertime":
-            con.send("<cmd-server-"+strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())+">")
+            lineServertime = "<cmd-server-servertime-"+strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())+">"
+            hashTextCmd = hashlib.sha224(lineServertime).hexdigest()
+            con.send(lineServertime + "-" + hashTextCmd)
+        elif cmd_extr == "ping":
+            linePing = "<cmd-server-ping-pong>"
+            hashTextCmd = hashlib.sha224(linePing).hexdigest()
+            con.send(linePing + "-" + hashTextCmd)
     elif data_split[0][1:] == "msg":
-		hashCheck = hashlib.sha224(data_split[2]).hexdigest()
-		if hashCheck == data_split[3][0:-1]:
-			for singleClient in currentConnections:
-				singleClient.send(str(data))
-		else:
-			for singleClient in currentConnections:
-				singleClient.send("<msg-server-" + errorList[0] + ">")
-			print errorList[0]
-			print "Original hash: " + data_split[3]
-			print "Tampered hash: " + hashCheck
+        hashCheckMsg = hashlib.sha224(data_split[3][0:-1]).hexdigest()
+        if hashCheckMsg == data_split[2]:
+            lineMsg = str(data)
+            hashTextCmd = hashlib.sha224(lineMsg).hexdigest()
+            for singleClient in currentConnections:
+				singleClient.send(lineMsg + "-" + hashTextCmd)
+        else:
+            lineMsgError = "<msg-server-error-" + errorList["TemperError"] + ">"
+            hashTextCmd = hashlib.sha224(lineMsgError).hexdigest()
+            con.send(lineMsgError + "-" + hashTextCmd)
+            print "TemperError"
+            print "Original hash: " + data_split[2]
+            print "Tampered hash: " + hashCheck
 
 def manageConnection(con, addr):
     global currentConnections
@@ -63,9 +76,9 @@ def manageConnection(con, addr):
     while nameDone == False:
         data = con.recv(1024)
         checkstr = data.split("-")
-        print "Checking username: \"" + str(checkstr[2][0:-1]) + "\""
-        if checkstr[0] == "<cmd" and checkstr[1] == "namechange":
-            usr = checkstr[2][0:-1]
+        print "Checking username: \"" + str(checkstr[3][0:-1]) + "\""
+        if checkstr[0] == "<cmd" and checkstr[2] == "namechange":
+            usr = checkstr[3][0:-1]
             try:
                 userList.index(usr)
                 print "Username declined"
@@ -76,7 +89,7 @@ def manageConnection(con, addr):
                 print "Username accepted"
                 con.send("<cmd-confirm-true-"+serverTitle+">")
                 for singleClient in currentConnections:
-                    singleClient.send("<msg-server-"+usr+" has joined the chat>")
+                    singleClient.send("<msg-server-startup-"+usr+" has joined the chat>")
 
     while 1:
         data = con.recv(1024)

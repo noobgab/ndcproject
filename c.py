@@ -19,7 +19,7 @@ def setupUser(socket):
 
     while nameDone == False:
         username = raw_input("Enter a username: ")
-        socket.sendall("<cmd-namechange-"+str(username)+">")
+        socket.sendall("<cmd-startup-namechange-"+str(username)+">")
 
         data = socket.recv(1024)
 
@@ -34,22 +34,29 @@ def setupUser(socket):
 def readInput(user, socket):
     while 1:
         text = raw_input()
-	hashText = hashlib.sha224(text).hexdigest()
+        hashText = hashlib.sha224(text).hexdigest()
         if prefix+"help" in text:
             line = "<cmd-help-"+user+">"
         elif prefix+"usercount" in text:
             line = "<cmd-usercount-"+user+">"
         elif prefix+"servertime" in text:
             line = "<cmd-servertime-"+user+">"
+        elif prefix+"ping" in text:
+		    line = "<cmd-ping-"+user+">"
         else:
-            line = "<msg-" + user + "-" + text + "-" + hashText + ">"
+            line = "<msg-" + user + "-" + hashText + "-" + text + ">"
         socket.sendall(line)
 
 def readData(user, socket):
     while 1:
         data = socket.recv(1024)
+        hashCheck = hashlib.sha224(data).hexdigest()
         data_split = data.split('-')
-        print "[" + strftime("%H:%M:%S", gmtime()) + "] " + data_split[1] + ": " + data_split[2]
+        if data_split[1] == "confirm":
+            if hashCheck == data_split[4]:
+                print "[" + strftime("%H:%M:%S", gmtime()) + "] " + data_split[1] + ": " + data_split[3][0:-1]
+        else:
+		    print "[" + strftime("%H:%M:%S", gmtime()) + "] " + data_split[1] + ": " + data_split[3][0:-1]
 
 setupUser(s)
 
