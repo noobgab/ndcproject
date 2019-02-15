@@ -22,7 +22,7 @@ userList = list()
 adminList = list()
 adminList.append("admin")
 commandList = ["help", "usercount", "servertime", "ping"]
-errorList = {"TemperError":"Server had trouble receiving your message. Please try again"}
+errorList = {"TamperError":"Server had trouble receiving your message. Please try again"}
 
 def parseInput(data, con):
     print str(data)
@@ -33,7 +33,7 @@ def parseInput(data, con):
             lineHelp = "<cmd-server-help-Here is a list of commands: "
             for cmd in commandList:
                 lineHelp += prefix + cmd + ", "
-            lineHelp = line[0:-2]
+            lineHelp = lineHelp[0:-2]
             lineHelp += ">"
             hashTextCmd = hashlib.sha224(lineHelp).hexdigest()
             con.send(lineHelp + "-" + hashTextCmd)
@@ -49,6 +49,9 @@ def parseInput(data, con):
             linePing = "<cmd-server-ping-pong>"
             hashTextCmd = hashlib.sha224(linePing).hexdigest()
             con.send(linePing + "-" + hashTextCmd)
+        elif cmd_extr == "quit":
+            con.send("<cmd-confirm-user-quit>")
+            con.shutdown(socket.SHUT_RD)
     elif data_split[0][1:] == "msg":
         hashCheckMsg = hashlib.sha224(data_split[3][0:-1]).hexdigest()
         if hashCheckMsg == data_split[2]:
@@ -60,7 +63,7 @@ def parseInput(data, con):
             lineMsgError = "<msg-server-error-" + errorList["TemperError"] + ">"
             hashTextCmd = hashlib.sha224(lineMsgError).hexdigest()
             con.send(lineMsgError + "-" + hashTextCmd)
-            print "TemperError"
+            print "TamperError"
             print "Original hash: " + data_split[2]
             print "Tampered hash: " + hashCheck
 
@@ -89,7 +92,9 @@ def manageConnection(con, addr):
                 print "Username accepted"
                 con.send("<cmd-confirm-true-"+serverTitle+">")
                 for singleClient in currentConnections:
-                    singleClient.send("<msg-server-startup-"+usr+" has joined the chat>")
+                    lineMsgJoin = "<msg-server-startup-"+usr+" has joined the chat>"
+                    hashTextCmd = hashlib.sha224(lineMsgJoin).hexdigest()
+                    singleClient.send(lineMsgJoin + "-" + hashTextCmd)
 
     while 1:
         data = con.recv(1024)

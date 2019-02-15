@@ -43,6 +43,8 @@ def readInput(user, socket):
             line = "<cmd-servertime-"+user+">"
         elif prefix+"ping" in text:
 		    line = "<cmd-ping-"+user+">"
+        elif prefix+"quit" in text:
+            line = "<cmd-quit-"+user+">"
         else:
             line = "<msg-" + user + "-" + hashText + "-" + text + ">"
         socket.sendall(line)
@@ -50,13 +52,13 @@ def readInput(user, socket):
 def readData(user, socket):
     while 1:
         data = socket.recv(1024)
-        hashCheck = hashlib.sha224(data).hexdigest()
         data_split = data.split('-')
-        if data_split[1] == "confirm":
+        hashCheck = hashlib.sha224(data_split[0]+"-"+data_split[1]+"-"+data_split[2]+"-"+data_split[3]).hexdigest()
+        if data_split[1] != "confirm":
             if hashCheck == data_split[4]:
                 print "[" + strftime("%H:%M:%S", gmtime()) + "] " + data_split[1] + ": " + data_split[3][0:-1]
-        else:
-		    print "[" + strftime("%H:%M:%S", gmtime()) + "] " + data_split[1] + ": " + data_split[3][0:-1]
+        ##else:
+		    ##print "[" + strftime("%H:%M:%S", gmtime()) + "] " + data_split[1] + ": " + data_split[3][0:-1]
 
 setupUser(s)
 
