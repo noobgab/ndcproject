@@ -83,10 +83,9 @@ def parseInput(data, con):
                 dataTamp = True
         elif cmd_extr == "quit":
             if data_split[3] == cmd_hex_disct["quit"]:
-                print "Not sure what to do with the !quit command just yet..."
-                lineStr = "please don't quit :("
-                line = "<cmd-server-"+getServerTime()+"-"+getHash(lineStr)+"-"+lineStr+">"
-                con.send(line)
+                con.send("<cmd-confirm-user-quit>")
+                con.shutdown(s.SHUT_RD)
+                con.close()
             else:
                 dataTamp = True
         else:
