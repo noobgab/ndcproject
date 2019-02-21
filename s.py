@@ -12,6 +12,8 @@ s.bind((HOST,PORT))
 
 # Global Variables
 buffer = []
+bufferTimes = []
+bufferTimeoutSeconds = 600 # time in seconds, 600 = 10 minutes, 3600000 = 1 hour
 prefix = "!"
 serverTitle = "No title"
 hashTextCmd = ""
@@ -44,6 +46,8 @@ def getHash(str):
     return hashlib.sha224(str).hexdigest()
 
 def parseInput(data, con):
+    global buffer
+    global bufferTimes
     print str(data)
     data_split = data.split('-')
     if data_split[0][1:] == "cmd":
@@ -104,9 +108,9 @@ def parseInput(data, con):
     elif data_split[0][1:] == "msg":
         content = data[data.index(data_split[3]) + len(data_split[3]) + 1:][:-1]
         hashCheckMsg = hashlib.sha224(content).hexdigest()
-        print(data_split[2])
         if hashCheckMsg == data_split[3]:
             buffer.append(data)
+            bufferTimes.append(int(round(time.time() * 1000)))
             for singleClient in currentConnections:
                 singleClient.send(data)
         else:
@@ -153,6 +157,22 @@ def manageConnection(con, addr):
     while 1:
         data = con.recv(1024)
         parseInput(data, con)
+
+def bufferProcess():
+    global bufferTimeoutSeconds
+    global bufferTimes
+    global buffer
+
+    while 1:
+        cs = int(round(time.time() * 1000))
+        for ts in bufferTimes:
+            if cs - ts > (bufferTimeoutSeconds*1000):
+                index = bufferTimes.index(ts)
+                del buffer[index]
+                del bufferTimes[index]
+
+bt = threading.Thread(target=bufferProcess, args=())
+bt.start()
 
 while 1:
     s.listen(1)
