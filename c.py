@@ -73,7 +73,7 @@ def readData(user, socket):
                 print "Error processing your request. Please try again."
         except Exception as e:
             print "Error processing your request. Please try again."
-
+            
 setupUser(s)
 
 t = threading.Thread(target=readInput, args=(username, s))
