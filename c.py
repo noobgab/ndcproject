@@ -21,6 +21,12 @@ cmd_hex_disct = {
     "quit": hashlib.sha224("quit").hexdigest()
 }
 
+def getClientTime():
+    return strftime("%H:%M:%S", gmtime())
+
+def getHash(str):
+    return hashlib.sha224(str).hexdigest()
+
 def setupUser(socket):
     global username
     nameDone = False
@@ -37,6 +43,7 @@ def setupUser(socket):
             cmd_split = data.split('-')
             print "Welcome to the chat: " + cmd_split[3][0:-1]
             nameDone = True
+            socket.sendall("<cmd-getbuffer-"+getClientTime()+"-"+getHash("getbuffer")+"-"+username+">");
         else:
             print "Error setting username. Try again..."
 

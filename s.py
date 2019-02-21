@@ -11,7 +11,7 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((HOST,PORT))
 
 # Global Variables
-buffer = ""
+buffer = []
 prefix = "!"
 serverTitle = "No title"
 hashTextCmd = ""
@@ -88,6 +88,12 @@ def parseInput(data, con):
                 con.close()
             else:
                 dataTamp = True
+        elif cmd_extr == "getbuffer":
+            if data_split[3] == getHash("getbuffer"):
+                print(buffer)
+                for b in buffer:
+                    con.send(b)
+                    time.sleep(0.001)
         else:
             con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["InvalidCommandError"])+"-"+errorList["InvalidCommandError"]+">")
 
@@ -98,7 +104,9 @@ def parseInput(data, con):
     elif data_split[0][1:] == "msg":
         content = data[data.index(data_split[3]) + len(data_split[3]) + 1:][:-1]
         hashCheckMsg = hashlib.sha224(content).hexdigest()
+        print(data_split[2])
         if hashCheckMsg == data_split[3]:
+            buffer.append(data)
             for singleClient in currentConnections:
                 singleClient.send(data)
         else:
