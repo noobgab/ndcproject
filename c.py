@@ -58,7 +58,8 @@ def readInput(user, socket):
         elif prefix+"servertime" in text:
             line = "<cmd-servertime-"+strftime("%H:%M:%S", gmtime())+"-"+cmd_hex_disct["servertime"]+"-"+user+">"
         elif prefix+"ping" in text:
-            line = "<cmd-ping-"+strftime("%H:%M:%S", gmtime())+"-"+cmd_hex_disct["ping"]+"-"+user+">"
+            millis = int(round(time.time() * 1000))
+            line = "<cmd-ping-"+str(millis)+"-"+getHash(str(millis))+"-"+user+">"
         elif prefix+"quit" in text:
             line = "<cmd-quit-"+strftime("%H:%M:%S", gmtime())+"-"+cmd_hex_disct["quit"]+"-"+user+">"
         else:
@@ -75,7 +76,12 @@ def readData(user, socket):
             hashCheck = hashlib.sha224(str(content)).hexdigest()
 
             if hashCheck == data_split[3]:
-                print "["+data_split[2]+"] " + data_split[1] + ": " + content
+                if data_split[0][1:] == "cmd" and data_split[1] == prefix+"ping":
+                    millis = float(round(time.time() * 1000))
+                    timediff = millis - float(data_split[2])
+                    print("PONG!!! The ping took "+str(int(timediff))+" millisecond(s)")
+                else:
+                    print "["+data_split[2]+"] " + data_split[1] + ": " + content
             else:
                 print "Error processing your request. Please try again."
         except Exception as e:

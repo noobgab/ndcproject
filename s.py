@@ -75,9 +75,9 @@ def parseInput(data, con):
             else:
                 dataTamp = True
         elif cmd_extr == "ping":
-            if data_split[3] == cmd_hex_disct["ping"]:
-                lineStr = "Pong!"
-                line = "<cmd-server-"+getServerTime()+"-"+getHash(lineStr)+"-"+lineStr+">"
+            if data_split[3] == getHash(data_split[2]):
+                #time.sleep(1) #uncomment this code to test the functionality of the ping command
+                line = "<cmd-"+prefix+"ping-"+data_split[2]+"-"+getHash(data_split[2])+"-"+data_split[2]+">"
                 con.send(line)
             else:
                 dataTamp = True
