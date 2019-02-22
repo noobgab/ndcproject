@@ -19,7 +19,8 @@ cmd_hex_disct = {
     "usercount": hashlib.sha224("usercount").hexdigest(),
     "servertime": hashlib.sha224("servertime").hexdigest(),
     "ping": hashlib.sha224("ping").hexdigest(),
-    "quit": hashlib.sha224("quit").hexdigest()
+    "quit": hashlib.sha224("quit").hexdigest(),
+    "serverquit": hashlib.sha224("serverquit").hexdigest()
 }
 
 # Returns the current client time
@@ -67,6 +68,9 @@ def readInput(user, socket):
             line = "<cmd-ping-"+str(millis)+"-"+getHash(str(millis))+"-"+user+">" # Build appropriate string
         elif prefix+"quit" in text: # Check if the prefix + 'quit' command is present in the input
             line = "<cmd-quit-"+strftime("%H:%M:%S", gmtime())+"-"+cmd_hex_disct["quit"]+"-"+user+">" # Build appropriate string
+            break
+        elif prefix+"serverquit" in text: # Check if the prefix + 'serverquit' command is present in the input
+            line = "<cmd-serverquit-"+strftime("%H:%M:%S", gmtime())+"-"+cmd_hex_disct["serverquit"]+"-"+user+">" # Build appropriate string
         else: # If no commands were detected, treat input as a regular message
             hashText = getHash(str(text)) # Hash the content that is going to be sent to the server
             line = "<msg-" + user + "-"+strftime("%H:%M:%S", gmtime())+"-" + hashText + "-" + text + ">" # Build appropriate string
@@ -87,6 +91,9 @@ def readData(user, socket):
                     millis = float(round(time.time() * 1000)) # Get the current time in milliseconds
                     timediff = millis - float(data_split[2]) # Calculate the difference between the current time and the time when the command was issued
                     print("PONG!!! The ping took "+str(int(timediff))+" millisecond(s)") # Print out to the user
+                elif data_split[4][:-1] == "User Quitting": # Check if the message section matches after validated with hash
+                    print "["+data_split[2]+"] " + data_split[1] + ": " + content # Print it out to the user
+                    break
                 else: # Otherwise, it is a regular message
                     print "["+data_split[2]+"] " + data_split[1] + ": " + content # Print it out to the user
             else: # Otherwise message has been tampered with, print out an error
@@ -104,3 +111,8 @@ t.start()
 # Create and start the thread to receive data from the server
 t = threading.Thread(target=readData, args=(username, s))
 t.start()
+t.join() # Join the threads back to the parent thread
+
+# Shutdown and close the socket
+s.shutdown(socket.SHUT_RDWR)
+s.close()

@@ -16,13 +16,14 @@ bufferTimes = [] # Keeps track of the post times of each message in the buffer
 bufferTimeoutSeconds = 600 # Time in seconds, 600 = 10 minutes, 3600000 = 1 hour, before a message is removed from the buffer
 prefix = "!" # Prefix definition, used throughout the program to indicate that a command is being called
 serverTitle = "No title" # Title of the server, changeable by admins
+serverClose = False # Checks if the server is still online
 
 # Global Lists
 currentConnections = list() # stores the connections for all connected users
 userList = list() # stores the usernames for all connected users
 adminList = list() # stores a list of admins
 adminList.append("admin") # add a default admin username into the list
-commandList = ["help", "usercount", "servertime", "ping", "quit"] # keep a list of commands, will be sent to users
+commandList = ["help", "usercount", "servertime", "ping", "quit", "serverquit"] # keep a list of commands, will be sent to users
 
 # Error messages used in the server. Stored in a dictionary so we can change it here, not in the middle of code
 errorList = {
@@ -36,7 +37,8 @@ cmd_hex_disct = {
     "usercount": hashlib.sha224("usercount").hexdigest(),
     "servertime": hashlib.sha224("servertime").hexdigest(),
     "ping": hashlib.sha224("ping").hexdigest(),
-    "quit": hashlib.sha224("quit").hexdigest()
+    "quit": hashlib.sha224("quit").hexdigest(),
+    "serverquit": hashlib.sha224("serverquit").hexdigest()
 }
 
 # Returns the current server time
@@ -91,11 +93,19 @@ def parseInput(data, con):
                 dataTamp = True
         elif cmd_extr == "quit": # If the command that was extracted was "quit"
             if data_split[3] == cmd_hex_disct["quit"]: # Check if the hash provided matches the hash that we expected to see
-                con.send("<cmd-confirm-user-quit>")
-                con.shutdown(s.SHUT_RD)
-                con.close()
+                lineStr = "User Quitting"
+                line = "<cmd-server-"+getServerTime()+"-"+getHash(lineStr)+"-"+lineStr+">" # build the string
+                con.send(line)
             else: # The hashes didnt match, data corrupted, dont execute the command
                 dataTamp = True
+        elif cmd_extr == "serverquit": # If the command that was extracted was "serverquit"
+            if data_split[3] == cmd_hex_disct["serverquit"]: # Check if the hash provided matches the hash that we expected to see
+                lineStr = "Server Quitting"
+                line = "<cmd-server-"+getServerTime()+"-"+getHash(lineStr)+"-"+lineStr+">" # build the string
+                for singleClient in currentConnections:
+                    singleClient.send(line)
+                global serverClose
+                serverClose = True
         elif cmd_extr == "getbuffer": # If the command that was extracted was "getbuffer", only called once per user when they join (not actually callable by user afterwards)
             if data_split[3] == getHash("getbuffer"): # Check if the hash provided matches the hash that we expected to see
                 for b in buffer: # Loop through the buffered messages
@@ -164,6 +174,9 @@ def manageConnection(con, addr):
     while 1: # After the name has been set successfully, continue listening for messages from the client
         data = con.recv(1024) # Receive the data from the user
         parseInput(data, con) # Send the data received to parseInput to deal with the data
+        if serverClose == True:
+            break
+        print "Server Offline Status: "+str(serverClose)
 
 # Processes the messages in the buffer, and removes old messages once they reach a certain amount of time
 def bufferProcess():
@@ -189,3 +202,12 @@ while 1:
 
     t = threading.Thread(target=manageConnection, args=(con, addr)) # Create a new thread for the user that has just joined
     t.start() # Start the new thread
+    if serverClose == True:
+        break
+
+bt.join() # Join the bufferProcess threads back to the parent thread
+t.join() # Join the threads back to the parent thread
+
+# Shutdown and close the socket
+s.shutdown(socket.SHUT_RDWR)
+s.close()
