@@ -48,7 +48,7 @@ def setupUser(socket):
             cmd_split = data.split('-') # Split the data that was received
             print "Welcome to the chat: " + cmd_split[3][0:-1] # Print a welcome message
             nameDone = True # Change the check variable to True, to show that the username has been set
-            socket.sendall("<cmd-getbuffer-"+getClientTime()+"-"+getHash("getbuffer")+"-"+username+">"); # Request the buffer from the server
+            socket.sendall("<cmd-getbuffer-"+getClientTime()+"-"+getHash("getbuffer")+"-"+username+">") # Request the buffer from the server
         else: # If the username was declined, try again
             print "Error setting username. Try again..."
 
@@ -68,7 +68,7 @@ def readInput(user, socket):
             line = "<cmd-ping-"+str(millis)+"-"+getHash(str(millis))+"-"+user+">" # Build appropriate string
         elif prefix+"quit" in text: # Check if the prefix + 'quit' command is present in the input
             line = "<cmd-quit-"+strftime("%H:%M:%S", gmtime())+"-"+cmd_hex_disct["quit"]+"-"+user+">" # Build appropriate string
-            break
+            ##break
         elif prefix+"serverquit" in text: # Check if the prefix + 'serverquit' command is present in the input
             line = "<cmd-serverquit-"+strftime("%H:%M:%S", gmtime())+"-"+cmd_hex_disct["serverquit"]+"-"+user+">" # Build appropriate string
         else: # If no commands were detected, treat input as a regular message
@@ -111,6 +111,7 @@ t.start()
 # Create and start the thread to receive data from the server
 t = threading.Thread(target=readData, args=(username, s))
 t.start()
+
 t.join() # Join the threads back to the parent thread
 
 # Shutdown and close the socket

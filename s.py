@@ -17,6 +17,7 @@ bufferTimeoutSeconds = 600 # Time in seconds, 600 = 10 minutes, 3600000 = 1 hour
 prefix = "!" # Prefix definition, used throughout the program to indicate that a command is being called
 serverTitle = "No title" # Title of the server, changeable by admins
 serverClose = False # Checks if the server is still online
+userClose = False # Checks if the user is still online
 
 # Global Lists
 currentConnections = list() # stores the connections for all connected users
@@ -54,6 +55,9 @@ def parseInput(data, con):
     global buffer # Access the global buffer list
     global bufferTimes # Access the global bufferTimes list
     global cmd_hex_disct # Access the global hash disctionary
+    global serverClose # Access the global serverClose boolean variable
+    global userClose # Access the global userClose boolean variable
+    global currentConnections # Access the global list of client socket connections
     print str(data) # Print out the data that has been received from the user
     data_split = data.split('-') # Split up the data to extract the information
     if data_split[0][1:] == "cmd": # Check if the data is a command, shown by "cmd"
@@ -95,7 +99,13 @@ def parseInput(data, con):
             if data_split[3] == cmd_hex_disct["quit"]: # Check if the hash provided matches the hash that we expected to see
                 lineStr = "User Quitting"
                 line = "<cmd-server-"+getServerTime()+"-"+getHash(lineStr)+"-"+lineStr+">" # build the string
-                con.send(line)
+                con.send(line) # send the string built above to the user
+                for oneCon in currentConnections:
+                    print "Before: "+str(oneCon) # Debug 1: Shows the list of client connections before user quitting #
+                currentConnections.remove(con) # Remove the conenction from the connections list
+                for oneCon2 in currentConnections:
+                    print "After: "+str(oneCon2) # Debug 2: Shows the list of client connections after user quitting #
+                userClose = True # set userClose boolean variable to True to indicate disconnection of user
             else: # The hashes didnt match, data corrupted, dont execute the command
                 dataTamp = True
         elif cmd_extr == "serverquit": # If the command that was extracted was "serverquit"
@@ -104,8 +114,7 @@ def parseInput(data, con):
                 line = "<cmd-server-"+getServerTime()+"-"+getHash(lineStr)+"-"+lineStr+">" # build the string
                 for singleClient in currentConnections:
                     singleClient.send(line)
-                global serverClose
-                serverClose = True
+                serverClose = True # set serverClose boolean variable to True to indicate closing of server
         elif cmd_extr == "getbuffer": # If the command that was extracted was "getbuffer", only called once per user when they join (not actually callable by user afterwards)
             if data_split[3] == getHash("getbuffer"): # Check if the hash provided matches the hash that we expected to see
                 for b in buffer: # Loop through the buffered messages
@@ -169,9 +178,14 @@ def manageConnection(con, addr):
                         lineMsgJoin = "<msg-server-"+typeMsg+"-"+hashTextCmd+"-"+usr+" has joined the chat>" # Build the return string
                         singleClient.send(lineMsgJoin) # Return the string to the user
             else: # If any other errors occur, send a failing message for the user to try again
-                con.send("<cmd-confirm-false>");
+                con.send("<cmd-confirm-false>")
 
     while 1: # After the name has been set successfully, continue listening for messages from the client
+        # Shutdown and close the client connection if both userClose is true and the connection is not in currentConnections list
+        if userClose == True and con not in currentConnections:
+            con.shutdown(socket.SHUT_RDWR)
+            con.close()
+            break
         data = con.recv(1024) # Receive the data from the user
         parseInput(data, con) # Send the data received to parseInput to deal with the data
         if serverClose == True:
@@ -198,7 +212,7 @@ bt.start() # Start the bt thread
 # Keep listening for incoming connections continuously
 while 1:
     s.listen(1)
-    con, addr = s.accept() # Accept a connection, storingn the connection object and an address
+    con, addr = s.accept() # Accept a connection, storing the connection object and an address
 
     t = threading.Thread(target=manageConnection, args=(con, addr)) # Create a new thread for the user that has just joined
     t.start() # Start the new thread
