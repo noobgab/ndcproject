@@ -53,7 +53,8 @@ cmd_hex_disct = {
     "changetitle": getHash("changetitle"),
     "addadmin": getHash("addadmin"),
     "removeadmin": getHash("removeadmin"),
-    "servertitle": getHash("servertitle")
+    "servertitle": getHash("servertitle"),
+    "clearbuffer": getHash("clearbuffer")
 }
 
 # Parses the input data that has come in from the user
@@ -192,9 +193,24 @@ def parseInput(data, con):
                 dataTamp = True
         elif cmd_extr == "servertitle":
             if data_split[3] == cmd_hex_disct["servertitle"]:
-                lineStr = "Current server title: "+serverTitle
-                line = "<cmd-server-"+getServerTime()+"-"+getHash(lineStr)+"-"+lineStr+">" # build the string
-                con.send(line) # send the string built above to the user
+                line = "Current server title: "+serverTitle
+                lineStr = "<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">" # build the string
+                con.send(lineStr) # send the string built above to the user
+            else:
+                dataTamp = True
+        elif cmd_extr == "clearbuffer":
+            if data_split[3] == cmd_hex_disct["clearbuffer"]:
+                print(data_split[4])
+                try:
+                    adminList.index(data_split[4][:-1])
+                    buffer = []
+                    bufferTimes = []
+                    line = "The chat buffer has been wiped."
+                    lineStr = "<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">"
+                    for singleClient in currentConnections:
+                        singleClient.send(lineStr)
+                except ValueError as ve:
+                    con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["AuthorizationError"])+"-"+errorList["AuthorizationError"]+">")
             else:
                 dataTamp = True
         else: # Else none of the valid commands matched the provided command, let the user know
@@ -203,7 +219,6 @@ def parseInput(data, con):
         if dataTamp == True: # Check if the data tampering variable has been set to True, print out to console
             print "[" + data_split[2] + "] "+data_split[4][:-1]+": Data tampering detected. The command " + prefix + cmd_extr + " is not going to be executed"
             con.send("error") # Send a single word "error" to user, this will throw an error on their end as it does not amtch the protocol data
-
     elif data_split[0][1:] == "msg": # Check if the data is a message, shown by "msg"
         content = data[data.index(data_split[3]) + len(data_split[3]) + 1:][:-1] # Extract the content of the message (everything after the hash-. This allows the user to type "-" characters in their messages without breaking the server)
         hashCheckMsg = getHash(content) # Get the hash of the content
