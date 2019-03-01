@@ -8,11 +8,11 @@ project files for ndc
 - B00085922
 - B00108141
 
-#22/2/2019 version
-Got most of the quit and serverquit command working
+#22/2/2019:
+- Got most of the quit and serverquit command working
 
-#23/2/2019 version
-Further improved quit command
+#23/2/2019:
+- Further improved quit command
 
-#1/3/2019
-Finsihed client quit cmd :D
+#1/3/2019:
+- Finsihed client quit cmd :D
