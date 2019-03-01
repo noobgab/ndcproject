@@ -24,7 +24,7 @@ currentConnections = list() # stores the connections for all connected users
 userList = list() # stores the usernames for all connected users
 adminList = list() # stores a list of admins
 adminList.append("admin") # add a default admin username into the list
-commandList = ["help", "usercount", "servertime", "ping", "quit", "serverquit", "changetitle", "addadmin"] # keep a list of commands, will be sent to users
+commandList = ["help", "usercount", "servertime", "ping", "quit", "serverquit", "changetitle", "addadmin", "removeadmin"] # keep a list of commands, will be sent to users
 
 # Error messages used in the server. Stored in a dictionary so we can change it here, not in the middle of code
 errorList = {
@@ -169,12 +169,20 @@ def parseInput(data, con):
                     adminList.index(data_split[4])
                     try:
                         toRemove = data[int(data.index(data_split[3])) + int(len(data_split[3]) + int(len(data_split[4])) + 2):][:-1]
-                        adminList.index(toRemove)
-                        adminList.remove(toRemove)
-                        line = toRemove + " is no longer an admin"
-                        lineStr = "<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">"
-                        for singleClient in currentConnections:
-                            singleClient.send(lineStr)
+                        if toRemove == "admin":
+                            adminIndex = userList.index("admin")
+                            line = "The user \""+data_split[4]+"\" tried to remove you from the admin list."
+                            currentConnections[adminIndex].send("<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">")
+                            
+                            line = "You can't remove \"admin\" from the admin list."
+                            con.send("<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">")
+                        else:
+                            adminList.index(toRemove)
+                            adminList.remove(toRemove)
+                            line = toRemove + " is no longer an admin"
+                            lineStr = "<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">"
+                            for singleClient in currentConnections:
+                                singleClient.send(lineStr)
                     except ValueError as ve:
                         con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["UnavailableUserError"])+"-"+errorList["UnavailableUserError"]+">")
                 except ValueError as ve:
