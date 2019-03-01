@@ -1,6 +1,6 @@
 # NDC Project
 
-Project files for the Network Distributed Computing: Assignment 1
+Project files for Network Distributed Computing assignment 1
 
 # Group Members
 
