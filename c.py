@@ -12,6 +12,7 @@ s.connect((HOST, PORT))
 
 prefix = "!" # Prefix definition, used throughout the program to indicate that a command is being called
 username = "" # Global variable that stores the username of the client (empty by default, will be set when the client joins the server)
+thread2Closed = False # Global variable that checks if t2 has join back to parent thread
 
 # Store the hashes of the most common commands, so we dont have to keep hashing them every time its called
 cmd_hex_disct = {
@@ -56,6 +57,8 @@ def setupUser(socket):
 def readInput(user, socket):
     global cmd_hex_disct # Access the global hash dictionary
     while 1: # Loop indefinitely
+        if thread2Closed == True:
+            break
         text = raw_input() # Prompt the user for input  
         if prefix+"help" in text: # Check if the prefix + 'help' command is present in the input
             line = "<cmd-help-"+strftime("%H:%M:%S", gmtime())+"-"+cmd_hex_disct["help"]+"-"+user+">" # Build appropriate string
@@ -68,7 +71,6 @@ def readInput(user, socket):
             line = "<cmd-ping-"+str(millis)+"-"+getHash(str(millis))+"-"+user+">" # Build appropriate string
         elif prefix+"quit" in text: # Check if the prefix + 'quit' command is present in the input
             line = "<cmd-quit-"+strftime("%H:%M:%S", gmtime())+"-"+cmd_hex_disct["quit"]+"-"+user+">" # Build appropriate string
-            ##break
         elif prefix+"serverquit" in text: # Check if the prefix + 'serverquit' command is present in the input
             line = "<cmd-serverquit-"+strftime("%H:%M:%S", gmtime())+"-"+cmd_hex_disct["serverquit"]+"-"+user+">" # Build appropriate string
         else: # If no commands were detected, treat input as a regular message
@@ -105,14 +107,16 @@ def readData(user, socket):
 setupUser(s)
 
 # Create and start the thread to read input from the user
-t = threading.Thread(target=readInput, args=(username, s))
-t.start()
+t1 = threading.Thread(target=readInput, args=(username, s))
+t1.start()
 
 # Create and start the thread to receive data from the server
-t = threading.Thread(target=readData, args=(username, s))
-t.start()
+t2 = threading.Thread(target=readData, args=(username, s))
+t2.start()
 
-t.join() # Join the threads back to the parent thread
+t2.join() # Join the threads back to the parent thread
+thread2Closed = True # Set the boolean to true to break t1's while loop
+t1.join() # Join the threads back to the parent thread
 
 # Shutdown and close the socket
 s.shutdown(socket.SHUT_RDWR)

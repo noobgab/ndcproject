@@ -13,3 +13,6 @@ Got most of the quit and serverquit command working
 
 #23/2/2019 version
 Further improved quit command
+
+#1/3/2019
+Finsihed client quit cmd :D
