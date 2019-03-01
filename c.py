@@ -96,6 +96,9 @@ def readData(user, socket):
                 elif data_split[4][:-1] == "User Quitting": # Check if the message section matches after validated with hash
                     print "["+data_split[2]+"] " + data_split[1] + ": " + content # Print it out to the user
                     break
+                elif data_split[4][:-1] == "Server Quitting": # Check if the message section matches after validated with hash
+                    print "["+data_split[2]+"] " + data_split[1] + ": " + content # Print it out to the user
+                    break
                 else: # Otherwise, it is a regular message
                     print "["+data_split[2]+"] " + data_split[1] + ": " + content # Print it out to the user
             else: # Otherwise message has been tampered with, print out an error
@@ -121,5 +124,3 @@ t1.join() # Join the threads back to the parent thread
 # Shutdown and close the socket
 s.shutdown(socket.SHUT_RDWR)
 s.close()
-
-#:D
