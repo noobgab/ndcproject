@@ -128,3 +128,5 @@ t1.join() # Join the threads back to the parent thread
 # Shutdown and close the socket
 s.shutdown(socket.SHUT_RDWR)
 s.close()
+
+sys.exit("Thank you for joining~ :D") # Exit the whole program when ends or in case of error occur
