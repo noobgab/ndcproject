@@ -14,16 +14,6 @@ prefix = "!" # Prefix definition, used throughout the program to indicate that a
 username = "" # Global variable that stores the username of the client (empty by default, will be set when the client joins the server)
 thread2Closed = False # Global variable that checks if t2 has join back to parent thread
 
-# Store the hashes of the most common commands, so we dont have to keep hashing them every time its called
-cmd_hex_disct = {
-    "help": hashlib.sha224("help").hexdigest(),
-    "usercount": hashlib.sha224("usercount").hexdigest(),
-    "servertime": hashlib.sha224("servertime").hexdigest(),
-    "ping": hashlib.sha224("ping").hexdigest(),
-    "quit": hashlib.sha224("quit").hexdigest(),
-    "serverquit": hashlib.sha224("serverquit").hexdigest()
-}
-
 # Returns the current client time
 def getClientTime():
     return strftime("%H:%M:%S", gmtime())
@@ -31,6 +21,17 @@ def getClientTime():
 # Returns the hash of a given string
 def getHash(str):
     return hashlib.sha224(str).hexdigest()
+
+# Store the hashes of the most common commands, so we dont have to keep hashing them every time its called
+cmd_hex_disct = {
+    "help": getHash("help"),
+    "usercount": getHash("usercount"),
+    "servertime": getHash("servertime"),
+    "ping": getHash("ping"),
+    "quit": getHash("quit"),
+    "serverquit": getHash("serverquit"),
+    "changetitle": getHash("changetitle")
+}
 
 # A function that will run to set up the user before it can send and receive regular messages
 def setupUser(socket):
@@ -61,21 +62,24 @@ def readInput(user, socket):
             break
         text = raw_input() # Prompt the user for input  
         if prefix+"help" in text: # Check if the prefix + 'help' command is present in the input
-            line = "<cmd-help-"+strftime("%H:%M:%S", gmtime())+"-"+cmd_hex_disct["help"]+"-"+user+">" # Build appropriate string
+            line = "<cmd-help-"+getClientTime()+"-"+cmd_hex_disct["help"]+"-"+user+">" # Build appropriate string
         elif prefix+"usercount" in text: # Check if the prefix + 'usercount' command is present in the input
-            line = "<cmd-usercount-"+strftime("%H:%M:%S", gmtime())+"-"+cmd_hex_disct["usercount"]+"-"+user+">" # Build appropriate string
+            line = "<cmd-usercount-"+getClientTime()+"-"+cmd_hex_disct["usercount"]+"-"+user+">" # Build appropriate string
         elif prefix+"servertime" in text: # Check if the prefix + 'servertime' command is present in the input
-            line = "<cmd-servertime-"+strftime("%H:%M:%S", gmtime())+"-"+cmd_hex_disct["servertime"]+"-"+user+">" # Build appropriate string
+            line = "<cmd-servertime-"+getClientTime()+"-"+cmd_hex_disct["servertime"]+"-"+user+">" # Build appropriate string
         elif prefix+"ping" in text: # Check if the prefix + 'ping' command is present in the input
             millis = int(round(time.time() * 1000)) # Get the current time in milliseconds, will be used to calculate the time taken
             line = "<cmd-ping-"+str(millis)+"-"+getHash(str(millis))+"-"+user+">" # Build appropriate string
         elif prefix+"quit" in text: # Check if the prefix + 'quit' command is present in the input
-            line = "<cmd-quit-"+strftime("%H:%M:%S", gmtime())+"-"+cmd_hex_disct["quit"]+"-"+user+">" # Build appropriate string
+            line = "<cmd-quit-"+getClientTime()+"-"+cmd_hex_disct["quit"]+"-"+user+">" # Build appropriate string
         elif prefix+"serverquit" in text: # Check if the prefix + 'serverquit' command is present in the input
-            line = "<cmd-serverquit-"+strftime("%H:%M:%S", gmtime())+"-"+cmd_hex_disct["serverquit"]+"-"+user+">" # Build appropriate string
+            line = "<cmd-serverquit-"+getClientTime()+"-"+cmd_hex_disct["serverquit"]+"-"+user+">" # Build appropriate string
+        elif prefix+"changetitle" in text:
+            newTitle = text[text.index(prefix+"changetitle") + len(prefix+"changetitle") + 1:]
+            line = "<cmd-changetitle-"+getClientTime()+"-"+cmd_hex_disct["changetitle"]+"-"+user+"-"+newTitle+">"
         else: # If no commands were detected, treat input as a regular message
             hashText = getHash(str(text)) # Hash the content that is going to be sent to the server
-            line = "<msg-" + user + "-"+strftime("%H:%M:%S", gmtime())+"-" + hashText + "-" + text + ">" # Build appropriate string
+            line = "<msg-" + user + "-"+getClientTime()+"-" + hashText + "-" + text + ">" # Build appropriate string
         socket.sendall(line) # Send the string that was built above
 
 # Used to read data coming in from the server

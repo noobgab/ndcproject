@@ -13,7 +13,7 @@ s.bind((HOST,PORT))
 # Global Variables
 buffer = [] # Stores the messages that have been sent in the char room, then sent to new users that join
 bufferTimes = [] # Keeps track of the post times of each message in the buffer
-bufferTimeoutSeconds = 600 # Time in seconds, 600 = 10 minutes, 3600000 = 1 hour, before a message is removed from the buffer
+bufferTimeoutSeconds = 600 # Time in seconds, 600 = 10 minutes, 3600 = 1 hour, before a message is removed from the buffer
 prefix = "!" # Prefix definition, used throughout the program to indicate that a command is being called
 serverTitle = "No title" # Title of the server, changeable by admins
 serverClose = False # Checks if the server is still online
@@ -24,22 +24,13 @@ currentConnections = list() # stores the connections for all connected users
 userList = list() # stores the usernames for all connected users
 adminList = list() # stores a list of admins
 adminList.append("admin") # add a default admin username into the list
-commandList = ["help", "usercount", "servertime", "ping", "quit", "serverquit"] # keep a list of commands, will be sent to users
+commandList = ["help", "usercount", "servertime", "ping", "quit", "serverquit", "changetitle"] # keep a list of commands, will be sent to users
 
 # Error messages used in the server. Stored in a dictionary so we can change it here, not in the middle of code
 errorList = {
     "TamperError": "Server had trouble receiving your message. Please try again",
-    "InvalidCommandError": "This command does not exist, please type !help to get the list of available commands"
-}
-
-# Store the hashes of the most common commands, so we dont have to keep hashing them every time its called
-cmd_hex_disct = {
-    "help": hashlib.sha224("help").hexdigest(),
-    "usercount": hashlib.sha224("usercount").hexdigest(),
-    "servertime": hashlib.sha224("servertime").hexdigest(),
-    "ping": hashlib.sha224("ping").hexdigest(),
-    "quit": hashlib.sha224("quit").hexdigest(),
-    "serverquit": hashlib.sha224("serverquit").hexdigest()
+    "InvalidCommandError": "This command does not exist, please type !help to get the list of available commands",
+    "AuthorizationError": "You do not have permission to perform this command."
 }
 
 # Returns the current server time
@@ -50,6 +41,17 @@ def getServerTime():
 def getHash(str):
     return hashlib.sha224(str).hexdigest()
 
+# Store the hashes of the most common commands, so we dont have to keep hashing them every time its called
+cmd_hex_disct = {
+    "help": getHash("help"),
+    "usercount": getHash("usercount"),
+    "servertime": getHash("servertime"),
+    "ping": getHash("ping"),
+    "quit": getHash("quit"),
+    "serverquit": getHash("serverquit"),
+    "changetitle": getHash("changetitle")
+}
+
 # Parses the input data that has come in from the user
 def parseInput(data, con):
     global buffer # Access the global buffer list
@@ -58,6 +60,7 @@ def parseInput(data, con):
     global serverClose # Access the global serverClose boolean variable
     global userClose # Access the global userClose boolean variable
     global currentConnections # Access the global list of client socket connections
+    global serverTitle
     print str(data) # Print out the data that has been received from the user
     data_split = data.split('-') # Split up the data to extract the information
     if data_split[0][1:] == "cmd": # Check if the data is a command, shown by "cmd"
@@ -106,6 +109,7 @@ def parseInput(data, con):
                 for oneCon2 in currentConnections:
                     print "After: "+str(oneCon2) # Debug 2: Shows the list of client connections after user quitting #
                 userClose = True # set userClose boolean variable to True to indicate disconnection of user
+                userList.remove(data_split[4][:-1])
             else: # The hashes didnt match, data corrupted, dont execute the command
                 dataTamp = True
         elif cmd_extr == "serverquit": # If the command that was extracted was "serverquit"
@@ -120,6 +124,20 @@ def parseInput(data, con):
                 for b in buffer: # Loop through the buffered messages
                     con.send(b) # Send them to the client one by one
                     time.sleep(0.001) # Sleep for a tiny amount to prevent overfloowing of messages which cause errors
+        elif cmd_extr == "changetitle":
+            if data_split[3] == cmd_hex_disct["changetitle"]:
+                try: # Attempt to find the index position of the provided username, if it succeeds then the username is already taken
+                    adminList.index(data_split[4])
+                    serverTitle = data[data.index(data_split[4]) + len(data_split[4]) + 1:][:-1]
+                    for singleClient in currentConnections:
+                        line = "The server title has changed to: " + serverTitle
+                        singleClient.send("<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">")
+                    # Proceed
+                except ValueError as ve: # If the name is not in the list, it will throw an Exception
+                    # User is not an admin
+                    con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["AuthorizationError"])+"-"+errorList["AuthorizationError"]+">")
+            else:
+                dataTamp = True
         else: # Else none of the valid commands matched the provided command, let the user know
             con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["InvalidCommandError"])+"-"+errorList["InvalidCommandError"]+">") # build the string, send it to user
 
@@ -157,7 +175,7 @@ def manageConnection(con, addr):
         print "Checking username: \"" + str(checkstr[4][0:-1]) + "\"" # Print progress message to console
         if checkstr[0] == "<cmd" and checkstr[2] == "namechange": # Check if a valid command has been sent
             usr = checkstr[4][0:-1] # Extract the username from the data
-            if checkstr[3] == getHash(usr): # Check if the extracted username matches the provided hash
+            if checkstr[3] == getHash(usr) and usr is not "": # Check if the extracted username matches the provided hash
                 try: # Attempt to find the index position of the provided username, if it succeeds then the username is already taken
                     userList.index(usr)
                     print "Username declined" # Print to console
