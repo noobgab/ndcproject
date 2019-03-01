@@ -24,7 +24,7 @@ currentConnections = list() # stores the connections for all connected users
 userList = list() # stores the usernames for all connected users
 adminList = list() # stores a list of admins
 adminList.append("admin") # add a default admin username into the list
-commandList = ["help", "usercount", "servertime", "ping", "quit", "serverquit", "changetitle", "addadmin", "removeadmin"] # keep a list of commands, will be sent to users
+commandList = ["help", "servertitle","usercount", "servertime", "ping", "quit", "serverquit", "changetitle", "addadmin", "removeadmin"] # keep a list of commands, will be sent to users
 
 # Error messages used in the server. Stored in a dictionary so we can change it here, not in the middle of code
 errorList = {
@@ -52,7 +52,8 @@ cmd_hex_disct = {
     "serverquit": getHash("serverquit"),
     "changetitle": getHash("changetitle"),
     "addadmin": getHash("addadmin"),
-    "removeadmin": getHash("removeadmin")
+    "removeadmin": getHash("removeadmin"),
+    "servertitle": getHash("servertitle")
 }
 
 # Parses the input data that has come in from the user
@@ -187,6 +188,13 @@ def parseInput(data, con):
                         con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["UnavailableUserError"])+"-"+errorList["UnavailableUserError"]+">")
                 except ValueError as ve:
                     con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["AuthorizationError"])+"-"+errorList["AuthorizationError"]+">")
+            else:
+                dataTamp = True
+        elif cmd_extr == "servertitle":
+            if data_split[3] == cmd_hex_disct["servertitle"]:
+                lineStr = "Current server title: "+serverTitle
+                line = "<cmd-server-"+getServerTime()+"-"+getHash(lineStr)+"-"+lineStr+">" # build the string
+                con.send(line) # send the string built above to the user
             else:
                 dataTamp = True
         else: # Else none of the valid commands matched the provided command, let the user know

@@ -33,7 +33,8 @@ cmd_hex_disct = {
     "serverquit": getHash("serverquit"),
     "changetitle": getHash("changetitle"),
     "addadmin": getHash("addadmin"),
-    "removeadmin": getHash("removeadmin")
+    "removeadmin": getHash("removeadmin"),
+    "servertitle": getHash("servertitle")
 }
 
 # A function that will run to set up the user before it can send and receive regular messages
@@ -86,6 +87,8 @@ def readInput(user, socket):
         elif prefix+"removeadmin" in text:
             toRemove = text[text.index(prefix+"removeadmin") + len(prefix+"removeadmin") + 1:]
             line = "<cmd-removeadmin-"+getClientTime()+"-"+cmd_hex_disct["removeadmin"]+"-"+user+"-"+toRemove+">"
+        elif prefix+"servertitle" in text:
+            line = "<cmd-servertitle-"+getClientTime()+"-"+cmd_hex_disct["servertitle"]+"-"+user+">"
         else: # If no commands were detected, treat input as a regular message
             hashText = getHash(str(text)) # Hash the content that is going to be sent to the server
             line = "<msg-" + user + "-"+getClientTime()+"-" + hashText + "-" + text + ">" # Build appropriate string

@@ -14,6 +14,7 @@ Project files for Network Distributed Computing assignment 1
 - Finished client quit cmd :D
 - Admin can now promote other users to be admins on the server
 - Admin can now remove admin privileges from users
+- Servertitle command now added, to show the current server title
 
 #### 23/2/2019:
 - Further improved quit command
