@@ -24,14 +24,15 @@ currentConnections = list() # stores the connections for all connected users
 userList = list() # stores the usernames for all connected users
 adminList = list() # stores a list of admins
 adminList.append("admin") # add a default admin username into the list
-commandList = ["help", "servertitle","usercount", "servertime", "ping", "quit", "serverquit", "changetitle", "addadmin", "removeadmin"] # keep a list of commands, will be sent to users
+commandList = ["help", "servertitle", "changename", "usercount", "servertime", "ping", "quit", "serverquit", "changetitle", "addadmin", "removeadmin"] # keep a list of commands, will be sent to users
 
 # Error messages used in the server. Stored in a dictionary so we can change it here, not in the middle of code
 errorList = {
     "TamperError": "Server had trouble receiving your message. Please try again.",
     "InvalidCommandError": "This command does not exist, please type !help to get the list of available commands.",
     "AuthorizationError": "You do not have permission to perform this command.",
-    "UnavailableUserError": "This user does not exist, please check the name you provided."
+    "UnavailableUserError": "This user does not exist, please check the name you provided.",
+    "UsernameTakenError": "This username already exists. Please try again."
 }
 
 # Returns the current server time
@@ -134,16 +135,14 @@ def parseInput(data, con):
                     time.sleep(0.001) # Sleep for a tiny amount to prevent overfloowing of messages which cause errors
         elif cmd_extr == "changetitle":
             if data_split[3] == cmd_hex_disct["changetitle"]:
-                try: # Attempt to find the index position of the provided username, if it succeeds then the username is already taken
+                try: # Attempt to find the index position of the provided username, if it succeeds then the username is an admin
                     adminList.index(data_split[4])
                     serverTitle = data[data.index(data_split[4]) + len(data_split[4]) + 1:][:-1]
                     line = "The server title has changed to: " + serverTitle
                     lineStr = "<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">"
                     for singleClient in currentConnections:
                         singleClient.send(lineStr)
-                    # Proceed
                 except ValueError as ve: # If the name is not in the list, it will throw an Exception
-                    # User is not an admin
                     con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["AuthorizationError"])+"-"+errorList["AuthorizationError"]+">")
             else:
                 dataTamp = True
@@ -211,6 +210,26 @@ def parseInput(data, con):
                         singleClient.send(lineStr)
                 except ValueError as ve:
                     con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["AuthorizationError"])+"-"+errorList["AuthorizationError"]+">")
+            else:
+                dataTamp = True
+        elif cmd_extr == "changename":
+            newName = data[int(data.index(data_split[3])) + int(len(data_split[3]) + int(len(data_split[4])) + 2):][:-1]
+            if data_split[3] == getHash(newName):
+                try:
+                    userIndex = userList.index(newName)
+                    con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["UsernameTakenError"])+"-"+errorList["UsernameTakenError"]+">")
+                except ValueError as ve:
+                    # Name free to use
+                    userIndex = userList.index(data_split[4])
+                    userList[userIndex] = newName
+
+                    try:
+                        adminIndex = adminList.index(data_split[4])
+                        adminList[adminIndex] = newName
+                    except ValueError as ve:
+                        print("[namechange] "+data_split[4]+": not an admin")
+
+                    con.send("<cmd-"+prefix+"changename-"+getServerTime()+"-"+getHash(newName)+"-"+newName+">")
             else:
                 dataTamp = True
         else: # Else none of the valid commands matched the provided command, let the user know

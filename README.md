@@ -16,6 +16,7 @@ Project files for Network Distributed Computing - Assignment 1
 - Admin can now remove admin privileges from users
 - Servertitle command now added, to show the current server title
 - Clearbuffer command now added, the admin can clear the buffer (remove every message from the buffer)
+- Changename command now added, users are able to change their usernames
 
 #### 23/2/2019:
 - Further improved quit command
