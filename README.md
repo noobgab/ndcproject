@@ -16,4 +16,5 @@ project files for ndc
 
 #1/3/2019:
 - Finsihed client quit cmd :D
-- Added functionality: admin can promote other users to be admins on the server
+- Admin can now promote other users to be admins on the server
+- Admin can now remove admin privileges from users

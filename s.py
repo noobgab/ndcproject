@@ -51,7 +51,8 @@ cmd_hex_disct = {
     "quit": getHash("quit"),
     "serverquit": getHash("serverquit"),
     "changetitle": getHash("changetitle"),
-    "addadmin": getHash("addadmin")
+    "addadmin": getHash("addadmin"),
+    "removeadmin": getHash("removeadmin")
 }
 
 # Parses the input data that has come in from the user
@@ -153,6 +154,24 @@ def parseInput(data, con):
                         userList.index(newAdminName)
                         adminList.append(newAdminName)
                         line = newAdminName + " has been promoted to admin"
+                        lineStr = "<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">"
+                        for singleClient in currentConnections:
+                            singleClient.send(lineStr)
+                    except ValueError as ve:
+                        con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["UnavailableUserError"])+"-"+errorList["UnavailableUserError"]+">")
+                except ValueError as ve:
+                    con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["AuthorizationError"])+"-"+errorList["AuthorizationError"]+">")
+            else:
+                dataTamp = True
+        elif cmd_extr == "removeadmin":
+            if data_split[3] == cmd_hex_disct["removeadmin"]:
+                try:
+                    adminList.index(data_split[4])
+                    try:
+                        toRemove = data[int(data.index(data_split[3])) + int(len(data_split[3]) + int(len(data_split[4])) + 2):][:-1]
+                        adminList.index(toRemove)
+                        adminList.remove(toRemove)
+                        line = toRemove + " is no longer an admin"
                         lineStr = "<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">"
                         for singleClient in currentConnections:
                             singleClient.send(lineStr)
