@@ -3,6 +3,7 @@ import threading
 from time import gmtime, strftime
 import time
 import hashlib
+import sys
 
 HOST = "127.0.0.1"
 PORT = 50007
@@ -124,3 +125,5 @@ t1.join() # Join the threads back to the parent thread
 # Shutdown and close the socket
 s.shutdown(socket.SHUT_RDWR)
 s.close()
+
+sys.exit("Thank you for joining~ :D") # Exit the whole program when ends or in case of error occur
