@@ -24,13 +24,14 @@ currentConnections = list() # stores the connections for all connected users
 userList = list() # stores the usernames for all connected users
 adminList = list() # stores a list of admins
 adminList.append("admin") # add a default admin username into the list
-commandList = ["help", "usercount", "servertime", "ping", "quit", "serverquit", "changetitle"] # keep a list of commands, will be sent to users
+commandList = ["help", "usercount", "servertime", "ping", "quit", "serverquit", "changetitle", "addadmin"] # keep a list of commands, will be sent to users
 
 # Error messages used in the server. Stored in a dictionary so we can change it here, not in the middle of code
 errorList = {
-    "TamperError": "Server had trouble receiving your message. Please try again",
-    "InvalidCommandError": "This command does not exist, please type !help to get the list of available commands",
-    "AuthorizationError": "You do not have permission to perform this command."
+    "TamperError": "Server had trouble receiving your message. Please try again.",
+    "InvalidCommandError": "This command does not exist, please type !help to get the list of available commands.",
+    "AuthorizationError": "You do not have permission to perform this command.",
+    "UnavailableUserError": "This user does not exist, please check the name you provided."
 }
 
 # Returns the current server time
@@ -49,7 +50,8 @@ cmd_hex_disct = {
     "ping": getHash("ping"),
     "quit": getHash("quit"),
     "serverquit": getHash("serverquit"),
-    "changetitle": getHash("changetitle")
+    "changetitle": getHash("changetitle"),
+    "addadmin": getHash("addadmin")
 }
 
 # Parses the input data that has come in from the user
@@ -61,6 +63,9 @@ def parseInput(data, con):
     global userClose # Access the global userClose boolean variable
     global currentConnections # Access the global list of client socket connections
     global serverTitle
+    global userList
+    global adminList
+
     print str(data) # Print out the data that has been received from the user
     data_split = data.split('-') # Split up the data to extract the information
     if data_split[0][1:] == "cmd": # Check if the data is a command, shown by "cmd"
@@ -129,12 +134,31 @@ def parseInput(data, con):
                 try: # Attempt to find the index position of the provided username, if it succeeds then the username is already taken
                     adminList.index(data_split[4])
                     serverTitle = data[data.index(data_split[4]) + len(data_split[4]) + 1:][:-1]
+                    line = "The server title has changed to: " + serverTitle
+                    lineStr = "<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">"
                     for singleClient in currentConnections:
-                        line = "The server title has changed to: " + serverTitle
-                        singleClient.send("<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">")
+                        singleClient.send(lineStr)
                     # Proceed
                 except ValueError as ve: # If the name is not in the list, it will throw an Exception
                     # User is not an admin
+                    con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["AuthorizationError"])+"-"+errorList["AuthorizationError"]+">")
+            else:
+                dataTamp = True
+        elif cmd_extr == "addadmin":
+            if data_split[3] == cmd_hex_disct["addadmin"]:
+                try:
+                    adminList.index(data_split[4])
+                    try:
+                        newAdminName = data[int(data.index(data_split[3])) + int(len(data_split[3]) + int(len(data_split[4])) + 2):][:-1]
+                        userList.index(newAdminName)
+                        adminList.append(newAdminName)
+                        line = newAdminName + " has been promoted to admin"
+                        lineStr = "<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">"
+                        for singleClient in currentConnections:
+                            singleClient.send(lineStr)
+                    except ValueError as ve:
+                        con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["UnavailableUserError"])+"-"+errorList["UnavailableUserError"]+">")
+                except ValueError as ve:
                     con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["AuthorizationError"])+"-"+errorList["AuthorizationError"]+">")
             else:
                 dataTamp = True
