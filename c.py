@@ -80,30 +80,30 @@ def readInput(user, socket):
             line = "<cmd-quit-"+getClientTime()+"-"+cmd_hex_disct["quit"]+"-"+username+">" # Build appropriate string
         elif prefix+"serverquit" in text: # Check if the prefix + 'serverquit' command is present in the input
             line = "<cmd-serverquit-"+getClientTime()+"-"+cmd_hex_disct["serverquit"]+"-"+username+">" # Build appropriate string
-        elif prefix+"changetitle" in text:
-            newTitle = text[text.index(prefix+"changetitle") + len(prefix+"changetitle") + 1:]
-            if len(newTitle) == 0:
-                print("["+getClientTime()+"] server: The title cannot be empty. Try again.")
-                line = "error"
+        elif prefix+"changetitle" in text: # Check if the prefix + 'changetitle' command is present in the input
+            newTitle = text[text.index(prefix+"changetitle") + len(prefix+"changetitle") + 1:] # Extract the new title parameter (everything after the command)
+            if len(newTitle) == 0: # Check if the length is 0, which would make it invalid
+                print("["+getClientTime()+"] server: The title cannot be empty. Try again.") # Inform the user
+                line = "error" # Data to be sent to the server, will be ignored as it's not a valid data block that the server requires
+            else: # not empty, proceed
+                line = "<cmd-changetitle-"+getClientTime()+"-"+cmd_hex_disct["changetitle"]+"-"+username+"-"+newTitle+">" # Build the data block that will be sent to the server
+        elif prefix+"addadmin" in text: # Check if the prefix + 'addadmin' command is present in the input
+            newAdmin = text[text.index(prefix+"addadmin") + len(prefix+"addadmin") + 1:] # Extract the new admin parameter (everything after the command)
+            line = "<cmd-addadmin-"+getClientTime()+"-"+cmd_hex_disct["addadmin"]+"-"+username+"-"+newAdmin+">" # Build the data block that will be sent to the server
+        elif prefix+"removeadmin" in text: # Check if the prefix + 'removeadmin' command is present in the input
+            toRemove = text[text.index(prefix+"removeadmin") + len(prefix+"removeadmin") + 1:] # Extract the admin name to remove parameter (everything after the command)
+            line = "<cmd-removeadmin-"+getClientTime()+"-"+cmd_hex_disct["removeadmin"]+"-"+username+"-"+toRemove+">" # Build the data block that will be sent to the server
+        elif prefix+"servertitle" in text: # Check if the prefix + 'servertitle' command is present in the input
+            line = "<cmd-servertitle-"+getClientTime()+"-"+cmd_hex_disct["servertitle"]+"-"+username+">" # Build the data block that will be sent to the server
+        elif prefix+"clearbuffer" in text: # Check if the prefix + 'clearbuffer' command is present in the input
+            line = "<cmd-clearbuffer-"+getClientTime()+"-"+cmd_hex_disct["clearbuffer"]+"-"+username+">" # Build the data block that will be sent to the server
+        elif prefix+"changename" in text: # Check if the prefix + 'changename' command is present in the input
+            newName = text[text.index(prefix+"changename") + len(prefix+"changename") + 1:] # Extract the new name parameter (everything after the command)
+            if len(newName) == 0: # Check if the length is 0, which would make it invalid
+                print("["+getClientTime()+"] server: Your username cannot be empty. Try again.") # Inform the user
+                line = "error" # Data to be sent to the server, will be ignored as it's not a valid data block that the server requires
             else:
-                line = "<cmd-changetitle-"+getClientTime()+"-"+cmd_hex_disct["changetitle"]+"-"+username+"-"+newTitle+">"
-        elif prefix+"addadmin" in text:
-            newAdmin = text[text.index(prefix+"addadmin") + len(prefix+"addadmin") + 1:]
-            line = "<cmd-addadmin-"+getClientTime()+"-"+cmd_hex_disct["addadmin"]+"-"+username+"-"+newAdmin+">"
-        elif prefix+"removeadmin" in text:
-            toRemove = text[text.index(prefix+"removeadmin") + len(prefix+"removeadmin") + 1:]
-            line = "<cmd-removeadmin-"+getClientTime()+"-"+cmd_hex_disct["removeadmin"]+"-"+username+"-"+toRemove+">"
-        elif prefix+"servertitle" in text:
-            line = "<cmd-servertitle-"+getClientTime()+"-"+cmd_hex_disct["servertitle"]+"-"+username+">"
-        elif prefix+"clearbuffer" in text:
-            line = "<cmd-clearbuffer-"+getClientTime()+"-"+cmd_hex_disct["clearbuffer"]+"-"+username+">"
-        elif prefix+"changename" in text:
-            newName = text[text.index(prefix+"changename") + len(prefix+"changename") + 1:]
-            if len(newName) == 0:
-                print("["+getClientTime()+"] server: Your username cannot be empty. Try again.")
-                line = "error"
-            else:
-                line = "<cmd-changename-"+getClientTime()+"-"+getHash(newName)+"-"+username+"-"+newName+">"
+                line = "<cmd-changename-"+getClientTime()+"-"+getHash(newName)+"-"+username+"-"+newName+">" # Build the data block that will be sent to the server
         else: # If no commands were detected, treat input as a regular message
             hashText = getHash(str(text)) # Hash the content that is going to be sent to the server
             line = "<msg-" + username + "-"+getClientTime()+"-" + hashText + "-" + text + ">" # Build appropriate string
@@ -131,9 +131,8 @@ def readData(user, socket):
                 elif data_split[4][:-1] == "Server Quitting": # Check if the message section matches after validated with hash
                     print "["+data_split[2]+"] " + data_split[1] + ": " + content # Print it out to the user
                     break
-                elif data_split[0][1:] == "cmd" and data_split[1] == prefix+"changename":
-                    username = content
-                    print "["+data_split[2]+"] server: Your username has been changed to: " + content
+                elif data_split[0][1:] == "cmd" and data_split[1] == prefix+"changename": # Check if the data received is confirmation for a username change
+                    username = content # Set the clients username to the username confirmed by the server
                 else: # Otherwise, it is a regular message
                     print "["+data_split[2]+"] " + data_split[1] + ": " + content # Print it out to the user
             else: # Otherwise message has been tampered with, print out an error

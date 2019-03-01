@@ -133,104 +133,108 @@ def parseInput(data, con):
                 for b in buffer: # Loop through the buffered messages
                     con.send(b) # Send them to the client one by one
                     time.sleep(0.001) # Sleep for a tiny amount to prevent overfloowing of messages which cause errors
-        elif cmd_extr == "changetitle":
-            if data_split[3] == cmd_hex_disct["changetitle"]:
+        elif cmd_extr == "changetitle": # If the command that was extracted was "changetitle"
+            if data_split[3] == cmd_hex_disct["changetitle"]: # Check if the hashes match
                 try: # Attempt to find the index position of the provided username, if it succeeds then the username is an admin
-                    adminList.index(data_split[4])
-                    serverTitle = data[data.index(data_split[4]) + len(data_split[4]) + 1:][:-1]
-                    line = "The server title has changed to: " + serverTitle
-                    lineStr = "<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">"
+                    adminList.index(data_split[4]) # Check if the user is an admin
+                    serverTitle = data[data.index(data_split[4]) + len(data_split[4]) + 1:][:-1] # Extract the new server title from the received data, store it in the global variable
+                    line = "The server title has changed to: " + serverTitle # Write some text that will be sent to every user
+                    lineStr = "<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">" # Put the line above into a data block that the clients can read
                     for singleClient in currentConnections:
-                        singleClient.send(lineStr)
+                        singleClient.send(lineStr) # Send the data block to every user int he server
                 except ValueError as ve: # If the name is not in the list, it will throw an Exception
                     con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["AuthorizationError"])+"-"+errorList["AuthorizationError"]+">")
-            else:
+            else: # The hashes didnt match, data corrupted, dont execute the command
                 dataTamp = True
-        elif cmd_extr == "addadmin":
-            if data_split[3] == cmd_hex_disct["addadmin"]:
-                try:
-                    adminList.index(data_split[4])
-                    try:
-                        newAdminName = data[int(data.index(data_split[3])) + int(len(data_split[3]) + int(len(data_split[4])) + 2):][:-1]
-                        userList.index(newAdminName)
-                        adminList.append(newAdminName)
-                        line = newAdminName + " has been promoted to admin"
-                        lineStr = "<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">"
+        elif cmd_extr == "addadmin": # If the command that was extracted was "addadmin"
+            if data_split[3] == cmd_hex_disct["addadmin"]: # Check if the hashes match
+                try: # Check if the user submitting the command is an admin
+                    adminList.index(data_split[4]) # Try to find the initiating user in the admin list
+                    try: # Check if the user to be added as an admin is online
+                        newAdminName = data[int(data.index(data_split[3])) + int(len(data_split[3]) + int(len(data_split[4])) + 2):][:-1] # Extract new admins name
+                        userList.index(newAdminName) # actually check if the new admin is a valid user
+                        adminList.append(newAdminName) # add the new admins username to the admin list
+                        line = newAdminName + " has been promoted to admin" # text to be sent to every user on the server
+                        lineStr = "<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">" # Build the data block that will be sent
                         for singleClient in currentConnections:
-                            singleClient.send(lineStr)
-                    except ValueError as ve:
+                            singleClient.send(lineStr) # Send the data block to every user
+                    except ValueError as ve: # Exception thrown: new admin is not a valid username (they are not on the server)
                         con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["UnavailableUserError"])+"-"+errorList["UnavailableUserError"]+">")
-                except ValueError as ve:
+                except ValueError as ve: # If exception thrown, the user is not an admin, let them now and dont execute the command
                     con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["AuthorizationError"])+"-"+errorList["AuthorizationError"]+">")
-            else:
+            else: # The hashes didnt match, data corrupted, dont execute the command
                 dataTamp = True
-        elif cmd_extr == "removeadmin":
-            if data_split[3] == cmd_hex_disct["removeadmin"]:
-                try:
+        elif cmd_extr == "removeadmin": # If the command that was extracted was "removeadmin"
+            if data_split[3] == cmd_hex_disct["removeadmin"]: # Check if the hashes match
+                try: # Check if the user submitting the command is an admin
                     adminList.index(data_split[4])
-                    try:
-                        toRemove = data[int(data.index(data_split[3])) + int(len(data_split[3]) + int(len(data_split[4])) + 2):][:-1]
-                        if toRemove == "admin":
-                            adminIndex = userList.index("admin")
-                            line = "The user \""+data_split[4]+"\" tried to remove you from the admin list."
-                            currentConnections[adminIndex].send("<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">")
+                    try: # Check if the user is in the admin list
+                        toRemove = data[int(data.index(data_split[3])) + int(len(data_split[3]) + int(len(data_split[4])) + 2):][:-1] # Extract the admin name to be removed
+                        if toRemove == "admin": # Check if they are trying to remove the default admin user
+                            adminIndex = userList.index("admin") # extract the admin index position in the user list
+                            line = "The user \""+data_split[4]+"\" tried to remove you from the admin list." # text to be sent to the admin
+                            currentConnections[adminIndex].send("<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">") # let the default admin know somebody is trying to remove their admin access
                             
-                            line = "You can't remove \"admin\" from the admin list."
-                            con.send("<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">")
+                            line = "You can't remove \"admin\" from the admin list." # text to be sent to the initiating user
+                            con.send("<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">") # actually send the data block to the user
                         else:
-                            adminList.index(toRemove)
-                            adminList.remove(toRemove)
-                            line = toRemove + " is no longer an admin"
-                            lineStr = "<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">"
+                            adminList.index(toRemove) # Check if the admin to be removed actually has admin privileges
+                            adminList.remove(toRemove) # remove them from the admin list
+                            line = toRemove + " has been removed as an admin" # text to be sent to every user
+                            lineStr = "<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">" # build the data block that will be sent
                             for singleClient in currentConnections:
-                                singleClient.send(lineStr)
-                    except ValueError as ve:
+                                singleClient.send(lineStr) # send the datablock to every user on the server
+                    except ValueError as ve: # Exception thrown: user was not in the admin list, let the user know
                         con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["UnavailableUserError"])+"-"+errorList["UnavailableUserError"]+">")
-                except ValueError as ve:
+                except ValueError as ve: # Exception thrown: initiating user is not an admin so they cannot perform this action, let them know
                     con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["AuthorizationError"])+"-"+errorList["AuthorizationError"]+">")
-            else:
+            else: # The hashes didnt match, data corrupted, dont execute the command
                 dataTamp = True
-        elif cmd_extr == "servertitle":
-            if data_split[3] == cmd_hex_disct["servertitle"]:
-                line = "Current server title: "+serverTitle
+        elif cmd_extr == "servertitle": # If the command that was extracted was "servertitle"
+            if data_split[3] == cmd_hex_disct["servertitle"]: # Check if the hashes match
+                line = "Current server title: "+serverTitle # Message to be sent to the user (the current server title)
                 lineStr = "<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">" # build the string
                 con.send(lineStr) # send the string built above to the user
             else:
                 dataTamp = True
-        elif cmd_extr == "clearbuffer":
-            if data_split[3] == cmd_hex_disct["clearbuffer"]:
-                print(data_split[4])
-                try:
+        elif cmd_extr == "clearbuffer": # If the command that was extracted was "clearbuffer"
+            if data_split[3] == cmd_hex_disct["clearbuffer"]: # Check if the hashes match
+                try: # Check if the user submitting the command is an admin
                     adminList.index(data_split[4][:-1])
-                    buffer = []
-                    bufferTimes = []
-                    line = "The chat buffer has been wiped."
-                    lineStr = "<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">"
+                    # No exception thrown, so user must be in the adminList (so they are allowed to run this command)
+                    buffer = [] # Set the buffer to be an empty list
+                    bufferTimes = [] # Set the buffer times to be an empty list
+                    line = "The chat buffer has been wiped." # Message to be sent to every user on the server
+                    lineStr = "<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">" # Build the data block that will be sent
                     for singleClient in currentConnections:
-                        singleClient.send(lineStr)
-                except ValueError as ve:
+                        singleClient.send(lineStr) # Send the data block to every user in the server
+                except ValueError as ve: # Exception thrown: initiating user is not an admin so they cannot perform this action, let them know
                     con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["AuthorizationError"])+"-"+errorList["AuthorizationError"]+">")
-            else:
+            else: # The hashes didnt match, data corrupted, dont execute the command
                 dataTamp = True
-        elif cmd_extr == "changename":
+        elif cmd_extr == "changename": # If the command that was extracted was "changename"
             newName = data[int(data.index(data_split[3])) + int(len(data_split[3]) + int(len(data_split[4])) + 2):][:-1]
-            if data_split[3] == getHash(newName):
-                try:
+            if data_split[3] == getHash(newName): # Check if the hashes match
+                try: # Check if the new name is unique
                     userIndex = userList.index(newName)
-                    con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["UsernameTakenError"])+"-"+errorList["UsernameTakenError"]+">")
-                except ValueError as ve:
-                    # Name free to use
-                    userIndex = userList.index(data_split[4])
-                    userList[userIndex] = newName
+                    # Exception was not thrown at this point, so the username msut be taken (in the list of users)
+                    con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["UsernameTakenError"])+"-"+errorList["UsernameTakenError"]+">") # Let the user know to try again
+                except ValueError as ve: # Exception thrown, the username must be availabe (not found in the list of users)
+                    userIndex = userList.index(data_split[4]) # Find the index position of the current user
+                    userList[userIndex] = newName # update their name in the list
 
-                    try:
-                        adminIndex = adminList.index(data_split[4])
-                        adminList[adminIndex] = newName
-                    except ValueError as ve:
+                    try: # Check if the user had admin privileges
+                        adminIndex = adminList.index(data_split[4]) # Get the index position of the user in the admin list
+                        adminList[adminIndex] = newName # No exception throw at this point, so user is an admin, update their name in the list
+                    except ValueError as ve: # Exception thrown, they were not an admin, no further processing needed
                         print("[namechange] "+data_split[4]+": not an admin")
-
+                    # Send the confirmation data to the user, to allow them to complete their name change
                     con.send("<cmd-"+prefix+"changename-"+getServerTime()+"-"+getHash(newName)+"-"+newName+">")
-            else:
+                    line = data_split[4] + " is now known as " + newName # Text to be sent to every user in the server
+                    lineStr = "<cmd-server-"+getServerTime()+"-"+getHash(line)+"-"+line+">" # Build the data block using the text message
+                    for singleClient in currentConnections:
+                        singleClient.send(lineStr) # send the data block to every user in the server
+            else: # The hashes didnt match, data corrupted, dont execute the command
                 dataTamp = True
         else: # Else none of the valid commands matched the provided command, let the user know
             con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["InvalidCommandError"])+"-"+errorList["InvalidCommandError"]+">") # build the string, send it to user
@@ -242,10 +246,10 @@ def parseInput(data, con):
         content = data[data.index(data_split[3]) + len(data_split[3]) + 1:][:-1] # Extract the content of the message (everything after the hash-. This allows the user to type "-" characters in their messages without breaking the server)
         hashCheckMsg = getHash(content) # Get the hash of the content
         if hashCheckMsg == data_split[3]: # Check if the hash provided matches the hash that we got using the content
-            buffer.append(data)
-            bufferTimes.append(int(round(time.time() * 1000)))
+            buffer.append(data) # add the message into the buffer
+            bufferTimes.append(int(round(time.time() * 1000))) # add a buffer timer for this message
             for singleClient in currentConnections:
-                singleClient.send(data)
+                singleClient.send(data) # Send the message to every user int he server
         else: # The hashes didn't match, print a message to the console and let the user know
             lineMsgError = "<msg-server-"+getServerTime()+"-"+getHash(errorList["TamperError"])+"-"+errorList["TamperError"]+">" # Build the string to be sent to the user
             print "["+data_split[2]+"] Tamper Error: "+data_split[1]+" -> \nOriginal hash: "+data_split[3]+" \nTampered hash: " + hashCheckMsg # Print a message to the console
@@ -327,8 +331,8 @@ while 1:
 
     t = threading.Thread(target=manageConnection, args=(con, addr)) # Create a new thread for the user that has just joined
     t.start() # Start the new thread
-    if serverClose == True:
-        break
+    if serverClose == True: # Check if the server close flag has been set
+        break # If so, exit the infinite loop
 
 bt.join() # Join the bufferProcess threads back to the parent thread
 t.join() # Join the threads back to the parent thread
