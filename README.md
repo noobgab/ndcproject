@@ -15,6 +15,6 @@ project files for ndc
 - Further improved quit command
 
 #1/3/2019:
-- Finsihed client quit cmd :D
+- Finished client quit cmd :D
 - Admin can now promote other users to be admins on the server
 - Admin can now remove admin privileges from users
