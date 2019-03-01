@@ -10,13 +10,13 @@ Project files for the Network Distributed Computing: Assignment 1
 
 # Update Log
 
-## 1/3/2019:
+#### 1/3/2019:
 - Finished client quit cmd :D
 - Admin can now promote other users to be admins on the server
 - Admin can now remove admin privileges from users
 
-## 23/2/2019:
+#### 23/2/2019:
 - Further improved quit command
 
-## 22/2/2019:
+#### 22/2/2019:
 - Got most of the quit and serverquit command working
