@@ -8,6 +8,21 @@ Project files for Network Distributed Computing - Assignment 1
 - B00085922
 - B00108141
 
+# Commands
+
+- !help : lists the available commands
+- !servertitle : lists the current server title
+- !changename X : allows the user to change their username, where X = new username
+- !usercount : lists the number of users online
+- !servertime : lists the current server time
+- !ping : tests the connection between the client and the server, lists the amount of time the command process took
+- !quit : allows the user to quit the chat server
+- !serverquit : allows an admin to close the server
+- !changetitle X : allows an admin to change the title of the server, where X = new title
+- !addadmin X : allows an admin to add another user to the admin list, where X = the username of to add
+- !removeadmin X : allows an admin to remove another user from the admin list, where X = the username to remove
+- !kickuser X : allows an admin to kick another user form the chat, where X = username to kick
+
 # Update Log
 
 #### 2/3/2019:
