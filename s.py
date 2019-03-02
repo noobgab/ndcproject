@@ -24,7 +24,7 @@ currentConnections = list() # stores the connections for all connected users
 userList = list() # stores the usernames for all connected users
 adminList = list() # stores a list of admins
 adminList.append("admin") # add a default admin username into the list
-commandList = ["help", "servertitle", "changename", "usercount", "servertime", "ping", "quit", "serverquit", "changetitle", "addadmin", "removeadmin"] # keep a list of commands, will be sent to users
+commandList = ["help", "servertitle", "changename", "usercount", "servertime", "ping", "quit", "serverquit", "changetitle", "addadmin", "removeadmin", "kickuser"] # keep a list of commands, will be sent to users
 
 # Error messages used in the server. Stored in a dictionary so we can change it here, not in the middle of code
 errorList = {
@@ -55,7 +55,8 @@ cmd_hex_disct = {
     "addadmin": getHash("addadmin"),
     "removeadmin": getHash("removeadmin"),
     "servertitle": getHash("servertitle"),
-    "clearbuffer": getHash("clearbuffer")
+    "clearbuffer": getHash("clearbuffer"),
+    "kickuser": getHash("kickuser")
 }
 
 # Parses the input data that has come in from the user
@@ -236,6 +237,37 @@ def parseInput(data, con):
                         singleClient.send(lineStr) # send the data block to every user in the server
             else: # The hashes didnt match, data corrupted, dont execute the command
                 dataTamp = True
+        elif cmd_extr == "kickuser":
+            if data_split[3] == getHash("kickuser"):
+                try: # Attempt to find the index position of the provided admin username, if it succeeds then the admin username is already valid
+                    adminList.index(data_split[4])
+                    kickUser = data[data.index(data_split[4]) + len(data_split[4]) + 1:][:-1]
+                    connIndex = userList.index(kickUser)
+                    # This section sends a prompt to admin that user has been kicked
+                    lineStrAdmin = "User Kicked"
+                    lineAdmin = "<cmd-server-"+getServerTime()+"-"+getHash(lineStrAdmin)+"-"+lineStrAdmin+">" # build the string
+                    con.send(lineAdmin) # send the string built above to the admin
+                    # This section sends a prompt to kicked user that user has been kicked
+                    lineStr = "You have been kicked from the chat"
+                    line = "<cmd-server-"+getServerTime()+"-"+getHash(lineStr)+"-"+lineStr+">" # build the string
+                    currentConnections[connIndex].send(line) # send the string built above to the user
+                    # For currentConnections debug purpose
+                    for oneCon in currentConnections:
+                        print "Before: "+str(oneCon) # Debug 1: Shows the list of client connections before user quitting #
+                    currentConnections.remove(currentConnections[connIndex]) # Remove the conenction from the connections list
+                    for oneCon2 in currentConnections:
+                        print "After: "+str(oneCon2) # Debug 2: Shows the list of client connections after user quitting #
+                    userClose = True # set userClose boolean variable to True to indicate disconnection of user
+                    # For userList debug purpose
+                    for singleUser in userList:
+                        print "Before: "+singleUser # Debug 3: Shows the list of users before user quitting #
+                    userList.remove(kickUser) # Remove the user from the user list
+                    for singleUser2 in userList:
+                        print "After: "+singleUser2 # Debug 4: Shows the list of users after user quitting #
+                    # Proceed
+                except ValueError as ve: # If the username is not in the list, it will throw an Exception
+                    # User is not an admin
+                    con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["AuthorizationError"])+"-"+errorList["AuthorizationError"]+">")
         else: # Else none of the valid commands matched the provided command, let the user know
             con.send("<cmd-server-"+getServerTime()+"-"+getHash(errorList["InvalidCommandError"])+"-"+errorList["InvalidCommandError"]+">") # build the string, send it to user
 

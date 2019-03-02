@@ -10,6 +10,9 @@ Project files for Network Distributed Computing - Assignment 1
 
 # Update Log
 
+#### 2/3/2019:
+- kickuser command is fully operational
+
 #### 1/3/2019:
 - Finished client quit cmd :D
 - Admin can now promote other users to be admins on the server

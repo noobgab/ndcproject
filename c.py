@@ -35,7 +35,8 @@ cmd_hex_disct = {
     "addadmin": getHash("addadmin"),
     "removeadmin": getHash("removeadmin"),
     "servertitle": getHash("servertitle"),
-    "clearbuffer": getHash("clearbuffer")
+    "clearbuffer": getHash("clearbuffer"),
+    "kickuser": getHash("kickuser")
 }
 
 # A function that will run to set up the user before it can send and receive regular messages
@@ -104,6 +105,9 @@ def readInput(user, socket):
                 line = "error" # Data to be sent to the server, will be ignored as it's not a valid data block that the server requires
             else:
                 line = "<cmd-changename-"+getClientTime()+"-"+getHash(newName)+"-"+username+"-"+newName+">" # Build the data block that will be sent to the server
+        elif prefix+"kickuser" in text:
+            kickUser = text[text.index(prefix+"kickuser") + len(prefix+"kickuser") + 1:]
+            line = "<cmd-kickuser-"+getClientTime()+"-"+cmd_hex_disct["kickuser"]+"-"+user+"-"+kickUser+">"
         else: # If no commands were detected, treat input as a regular message
             hashText = getHash(str(text)) # Hash the content that is going to be sent to the server
             line = "<msg-" + username + "-"+getClientTime()+"-" + hashText + "-" + text + ">" # Build appropriate string
@@ -133,6 +137,11 @@ def readData(user, socket):
                     break
                 elif data_split[0][1:] == "cmd" and data_split[1] == prefix+"changename": # Check if the data received is confirmation for a username change
                     username = content # Set the clients username to the username confirmed by the server
+                elif data_split[4][:-1] == "User Kicked": # Check if the message section matches after validated with hash
+                    print "["+data_split[2]+"] " + data_split[1] + ": " + content # Print it out to the user
+                elif data_split[4][:-1] == "You have been kicked from the chat": # Check if the message section matches after validated with hash
+                    print "["+data_split[2]+"] " + data_split[1] + ": " + content # Print it out to the user
+                    break
                 else: # Otherwise, it is a regular message
                     print "["+data_split[2]+"] " + data_split[1] + ": " + content # Print it out to the user
             else: # Otherwise message has been tampered with, print out an error
