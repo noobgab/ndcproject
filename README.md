@@ -10,19 +10,19 @@ Project files for Network Distributed Computing - Assignment 1
 
 # Commands
 
-- !help : lists the available commands
-- !servertitle : lists the current server title
-- !changename X : allows the user to change their username, where X = new username
-- !usercount : lists the number of users online
-- !servertime : lists the current server time
-- !ping : tests the connection between the client and the server, lists the amount of time the command process took
-- !quit : allows the user to quit the chat server
-- !serverquit : allows an admin to close the server
-- !clearbuffer : allows an admin to clear the message buffer
-- !changetitle X : allows an admin to change the title of the server, where X = new title
-- !addadmin X : allows an admin to add another user to the admin list, where X = the username of to add
-- !removeadmin X : allows an admin to remove another user from the admin list, where X = the username to remove
-- !kickuser X : allows an admin to kick another user form the chat, where X = username to kick
+- <b>!help</b> : lists the available commands
+- <b>!servertitle</b> : lists the current server title
+- <b>!changename X</b> : allows the user to change their username, where X = new username
+- <b>!usercount</b> : lists the number of users online
+- <b>!servertime</b> : lists the current server time
+- <b>!ping</b> : tests the connection between the client and the server, lists the amount of time the command process took
+- <b>!quit</b> : allows the user to quit the chat server
+- <b>!serverquit</b> : allows an admin to close the server
+- <b>!clearbuffer</b> : allows an admin to clear the message buffer
+- <b>!changetitle X</b> : allows an admin to change the title of the server, where X = new title
+- <b>!addadmin X</b> : allows an admin to add another user to the admin list, where X = the username of to add
+- <b>!removeadmin X</b> : allows an admin to remove another user from the admin list, where X = the username to remove
+- <b>!kickuser X</b> : allows an admin to kick another user form the chat, where X = username to kick
 
 # Update Log
 
