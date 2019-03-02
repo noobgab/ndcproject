@@ -24,7 +24,7 @@ currentConnections = list() # stores the connections for all connected users
 userList = list() # stores the usernames for all connected users
 adminList = list() # stores a list of admins
 adminList.append("admin") # add a default admin username into the list
-commandList = ["help", "servertitle", "changename", "usercount", "servertime", "ping", "quit", "serverquit", "changetitle", "addadmin", "removeadmin", "kickuser"] # keep a list of commands, will be sent to users
+commandList = ["help", "servertitle", "changename", "usercount", "servertime", "ping", "quit", "serverquit", "clearbuffer", "changetitle", "addadmin", "removeadmin", "kickuser"] # keep a list of commands, will be sent to users
 
 # Error messages used in the server. Stored in a dictionary so we can change it here, not in the middle of code
 errorList = {

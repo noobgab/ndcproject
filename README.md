@@ -18,6 +18,7 @@ Project files for Network Distributed Computing - Assignment 1
 - !ping : tests the connection between the client and the server, lists the amount of time the command process took
 - !quit : allows the user to quit the chat server
 - !serverquit : allows an admin to close the server
+- !clearbuffer : allows an admin to clear the message buffer
 - !changetitle X : allows an admin to change the title of the server, where X = new title
 - !addadmin X : allows an admin to add another user to the admin list, where X = the username of to add
 - !removeadmin X : allows an admin to remove another user from the admin list, where X = the username to remove
